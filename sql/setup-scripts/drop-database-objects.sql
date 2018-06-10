@@ -1,0 +1,20 @@
+Use OnTheMoney
+GO
+DROP PROC BOOKS.CalculateBalance
+GO
+DROP PROC BOOKS.ProcessImportFile
+GO
+DROP FUNCTION BOOKS.CleanStringMoney
+GO
+DROP TABLE BOOKS.TransactionLine
+GO
+DROP TABLE BOOKS.[Transaction]
+GO
+DROP TABLE [BOOKS].[LoadImportFile]
+GO
+DROP TABLE BOOKS.Account
+GO
+DROP TABLE BOOKS.AccountType
+GO
+DROP SCHEMA BOOKS
+GO
