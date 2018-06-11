@@ -57,7 +57,7 @@ CREATE TABLE [BOOKS].[LoadImportFile]
 [Reference] [varchar](50) NULL,
 [Amount] [varchar](50) NULL,
 [Balance] [varchar](50) NULL,
-[To From Account Number] [varchar](50) NULL,
+[To/From Account Number] [varchar](50) NULL,
 [Conversion Charge] [varchar](50) NULL,
 [Foreign Currency Amount] [varchar](50) NULL
 ) ON [PRIMARY]

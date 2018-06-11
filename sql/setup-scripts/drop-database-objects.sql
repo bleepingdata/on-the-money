@@ -11,7 +11,7 @@ GO
 DROP TABLE BOOKS.[Transaction]
 GO
 DROP TABLE [BOOKS].[LoadImportFile]
-GO
+GO	
 DROP TABLE BOOKS.Account
 GO
 DROP TABLE BOOKS.AccountType
