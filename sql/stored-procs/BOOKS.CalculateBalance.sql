@@ -29,7 +29,8 @@ BEGIN
 		SET @NextAccountIdInt = (SELECT AccountId FROM @NextAccountId);
 		RAISERROR('Updating balance for AccountId %i', 1, 1, @NextAccountIdInt) WITH NOWAIT;
 		
-		DECLARE @DepositAmountTotal MONEY = ISNULL((SELECT SUM(DepositAmount) FROM BOOKS.TransactionLine tl INNER JOIN @NextAccountId next_ac on tl.AccountId = next_ac.AccountId),0);
+		DECLARE @DepositAmountTotal MONEY = ISNULL((SELECT SUM(DepositAmount) FROM BOOKS.TransactionLine tl 
+				INNER JOIN @NextAccountId next_ac on tl.AccountId = next_ac.AccountId),0);
 		DECLARE @WithdrawalAmountTotal MONEY = ISNULL((SELECT SUM(WithdrawalAmount) FROM BOOKS.TransactionLine tl INNER JOIN @NextAccountId next_ac on tl.AccountId = next_ac.AccountId),0);
 
 		UPDATE a SET a.Balance = OpeningBalance + (@DepositAmountTotal - @WithdrawalAmountTotal) 

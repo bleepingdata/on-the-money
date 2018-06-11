@@ -21,7 +21,7 @@ SELECT
 				  ,[Reference]
 				  ,[Amount]
 				  ,[Balance]
-				  ,[To From Account Number] AS [ToFromAccountNumber]
+				  ,[To/From Account Number] AS [ToFromAccountNumber]
 				  ,[Conversion Charge] AS [ConversionCharge]
 				  ,[Foreign Currency Amount] AS [ForeignCurrencyAmount]
 			  FROM [BOOKS].[LoadImportFile] B
