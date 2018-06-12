@@ -5,7 +5,10 @@ GO
 CREATE PROC BOOKS.CalculateBalance @AccountId INT = NULL
 AS
 BEGIN
-	SET NOCOUNT ON;
+/* 
+ Get the balance for an account or accounts, taking the opening balance into account
+ */
+ 	SET NOCOUNT ON;
 
 	DECLARE @AccountIds TABLE (AccountId INT NOT NULL, OpeningBalanceDate DATE NOT NULL);
 	DECLARE @NextAccountId TABLE (AccountId INT NOT NULL, OpeningBalanceDate DATE NOT NULL);
@@ -39,7 +42,7 @@ BEGIN
 								INNER JOIN BOOKS.TransactionLine tl ON t.TransactionId = tl.TransactionId
 								INNER JOIN @NextAccountId next_ac on tl.AccountId = next_ac.AccountId
 								WHERE t.BankProcessedDate >= next_ac.OpeningBalanceDate)
-							,0);	
+							,0);
 		DECLARE @WithdrawalAmountTotal MONEY 
 			= ISNULL(
 						(SELECT SUM(WithdrawalAmount) 
