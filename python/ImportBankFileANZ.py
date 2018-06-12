@@ -10,6 +10,6 @@ file = 'C:\\Stephen\\Test\\on-the-money\\ANZTestFileExport.xlsx'
 xl = pd.ExcelFile(file)
 
 # Load a sheet into a DataFrame by name: df1
-df1 = xl.parse('Transactions')
+df1 = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
 df1.to_sql(name='LoadImportFile', if_exists='append',con=engine, schema='BOOKS', index=False, chunksize=1)
 
