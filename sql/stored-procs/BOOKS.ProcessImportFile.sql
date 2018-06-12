@@ -8,9 +8,9 @@ BEGIN
 
 DECLARE @ImportUniqueIdentifier UNIQUEIDENTIFIER = NEWID();
 
-INSERT BOOKS.[Transaction] (TransactionDate, TransactionXML, Amount, ImportUniqueIdentifier)
+INSERT BOOKS.[Transaction] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier)
 SELECT 
-	TRY_CONVERT(DATE, [Transaction Date]) AS [TransactionDate],
+	TRY_CONVERT(DATE, [Transaction Date]) AS [BankTransactionDate], TRY_CONVERT(DATE, [Processed Date]) AS [BankProcessedDate],
 		(SELECT [LoadImportFileId]
 				  ,[Transaction Date] AS [TransactionDate]
 				  ,[Processed Date] AS [ProcessedDate]
@@ -34,7 +34,7 @@ SELECT
 	FROM [BOOKS].[LoadImportFile] A
 
 	INSERT [BOOKS].TransactionLine (TransactionId, AccountId, DepositAmount, WithdrawalAmount)
-	 SELECT TransactionId, 
+	SELECT TransactionId, 
 		CASE WHEN Amount >= 0 THEN @BankAccountId ELSE 0 END AS [AccountId],
 		ABS(Amount) AS [DepositAmount],
 		0 AS WithdrawalAmount
