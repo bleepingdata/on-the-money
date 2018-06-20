@@ -28,6 +28,7 @@ except IOError as e:
 bankexcelfile = args.bankexcelfile
 bankaccountnumber = args.bankaccountnumber
 bankaccountdescription = args.bankaccountdescription
+removeoverlappingtransactions = True; 
 
 # Create the SQL connection object
 engine = create_engine('mssql://LOCALHOST\\SQLEXPRESS/OnTheMoney?trusted_connection=yes;driver=SQL+Server+Native+Client+10.0') 
@@ -47,7 +48,7 @@ dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str}
 dfTransactions.to_sql(name='LoadImportFile', if_exists='append',con=engine, schema='BOOKS', index=False, chunksize=1)
 
 # Process the file
-cursor.execute("BOOKS.ProcessImportFile ?, ?", [bankaccountnumber, bankaccountdescription])
+cursor.execute("BOOKS.ProcessImportFile ?, ?, ?", [bankaccountnumber, bankaccountdescription, removeoverlappingtransactions])
 cursor.commit()
 
 

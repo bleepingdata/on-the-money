@@ -88,3 +88,28 @@ WithdrawalAmount MONEY NULL,
 RowCreationDate DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionLine_dt DEFAULT(SYSDATETIME())
 );
 GO
+
+CREATE TABLE BOOKS.[TransactionStaging]
+(
+TransactionStagingId BIGINT IDENTITY (1,1) NOT NULL CONSTRAINT PK_BOOKS_TransactionStaging PRIMARY KEY CLUSTERED,
+BankTransactionDate DATE NOT NULL,
+BankProcessedDate DATE NULL,
+TransactionXML XML NOT NULL,
+Amount MONEY NOT NULL,
+ImportDatetime DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionStaging_ImportDatetime DEFAULT(SYSDATETIME()),
+ImportUniqueIdentifier UNIQUEIDENTIFIER NOT NULL,
+IsProcessed BIT NOT NULL CONSTRAINT DF_BOOKS_TransactionStaging DEFAULT (0),
+ProcessedDatetime DATETIME2 NULL,
+RowCreationDate DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionStaging_dt DEFAULT(SYSDATETIME())
+);
+GO
+CREATE TABLE BOOKS.[TransactionLineStaging]
+(
+TransactionLineStagingId BIGINT IDENTITY (1,1) NOT NULL CONSTRAINT PK_BOOKS_TransactionLineStaging PRIMARY KEY CLUSTERED,
+TransactionStagingId BIGINT NOT NULL CONSTRAINT FK_BOOKS_TransactionLineStaging_TransactionId FOREIGN KEY REFERENCES BOOKS.[TransactionStaging](TransactionStagingId),
+AccountId INT NULL CONSTRAINT FK_BOOKS_TransactionLineStaging_AccountId FOREIGN KEY REFERENCES BOOKS.Account(AccountId),
+DepositAmount MONEY NULL,
+WithdrawalAmount MONEY NULL,
+RowCreationDate DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionLineStaging_dt DEFAULT(SYSDATETIME())
+);
+GO

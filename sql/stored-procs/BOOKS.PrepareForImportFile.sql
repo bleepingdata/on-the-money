@@ -28,7 +28,9 @@ BEGIN
 
 	-- truncate the table that will hold the imported data
 	TRUNCATE TABLE BOOKS.LoadImportFile;
-
+	DELETE BOOKS.TransactionLineStaging WHERE 1=1;
+	DELETE BOOKS.TransactionStaging WHERE 1=1;
+	
 	RETURN;
 
 END
