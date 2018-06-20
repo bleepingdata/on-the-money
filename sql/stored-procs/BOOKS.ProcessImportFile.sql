@@ -82,7 +82,7 @@ BEGIN
 				INNER JOIN BOOKS.TransactionLine tl ON t.TransactionId = tl.TransactionId
 				WHERE tl.AccountId = @BankAccountId AND t.BankTransactionDate 
 					IN (SELECT BankTransactionDate 
-							FROM BOOKS.TransactionStaging); 
+							FROM BOOKS.TransactionStaging 
 							WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier);
 
 		DELETE BOOKS.TransactionLine WHERE TransactionId IN (SELECT TransactionId FROM @TransactionIdsToDelete);
