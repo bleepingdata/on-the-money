@@ -31,7 +31,7 @@ BEGIN
 	DECLARE @ImportUniqueIdentifier UNIQUEIDENTIFIER = NEWID();
 
 	-- add to staging tables
-	INSERT BOOKS.[TransactionStaging] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier)
+	INSERT BOOKS.[TransactionStaging] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, [Type], [Details], [Particulars], [Code], [Reference])
 		SELECT 
 			TRY_CONVERT(DATE, [Transaction Date]) AS [BankTransactionDate], TRY_CONVERT(DATE, [Processed Date]) AS [BankProcessedDate],
 			(SELECT [LoadImportFileId]
@@ -53,7 +53,12 @@ BEGIN
 				  ) 
 				AS [TransactionXML],
 			BOOKS.CleanStringMoney([Amount]) AS [Amount],
-			@ImportUniqueIdentifier
+			@ImportUniqueIdentifier,
+			[Type],
+			[Details],
+			[Particulars],
+			[Code],
+			[Reference]
 		FROM [BOOKS].[LoadImportFile] A
 
 	INSERT [BOOKS].TransactionLineStaging (TransactionStagingId, AccountId, DepositAmount, WithdrawalAmount)
@@ -113,13 +118,18 @@ BEGIN
 	END
 
 	-- Import into Transaction tables
-	INSERT BOOKS.[Transaction] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier)
+	INSERT BOOKS.[Transaction] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, [Type], [Details], [Particulars], [Code], [Reference])
 	SELECT 
 		[BankTransactionDate], 
 		[BankProcessedDate],
 		[TransactionXML],
 		[Amount],
-		ImportUniqueIdentifier
+		ImportUniqueIdentifier,
+		[Type],
+		[Details],
+		[Particulars],
+		[Code],
+		[Reference]
 		FROM [BOOKS].[TransactionStaging] A
 
 	INSERT [BOOKS].TransactionLine (TransactionId, AccountId, DepositAmount, WithdrawalAmount)

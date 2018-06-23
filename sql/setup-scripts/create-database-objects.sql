@@ -31,11 +31,12 @@ AccountId INT NOT NULL IDENTITY(1,1) CONSTRAINT PK_BOOKS_Account PRIMARY KEY CLU
 [AccountTypeId] SMALLINT NOT NULL CONSTRAINT FK_BOOKS_Account_AccountType FOREIGN KEY REFERENCES BOOKS.AccountType(AccountTypeId),
 [AccountCode] CHAR(10) NOT NULL CONSTRAINT UQ_BOOKS_Account_AccountCode UNIQUE,
 Description NVARCHAR(50) NOT NULL CONSTRAINT UQ_BOOKS_Account_Description UNIQUE,
-[BankAccountNumber] NVARCHAR(56) NULL CONSTRAINT UQ_BOOKS_Account_BankAccountNumber UNIQUE,
+[BankAccountNumber] NVARCHAR(56) NULL,
 [OpeningBalance] MONEY NOT NULL,
 [OpeningBalanceDate] DATE NOT NULL,
 [Balance] MONEY NOT NULL CONSTRAINT DF_BOOKS_Account_Balance DEFAULT(0)
 )
+CREATE INDEX UQ_BOOKS_Account_BankAccountNumber ON BOOKS.Account([BankAccountNumber]) WHERE [BankAccountNumber] IS NOT NULL;
 GO
 SET IDENTITY_INSERT BOOKS.Account ON;
 GO
@@ -73,6 +74,11 @@ TransactionXML XML NOT NULL,
 Amount MONEY NOT NULL,
 ImportDatetime DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_Transaction_ImportDatetime DEFAULT(SYSDATETIME()),
 ImportUniqueIdentifier UNIQUEIDENTIFIER NOT NULL,
+[Type] VARCHAR(50) NULL, 
+[Details] VARCHAR(50) NULL, 
+[Particulars] VARCHAR(50) NULL, 
+[Code] VARCHAR(50) NULL, 
+[Reference] VARCHAR(50) NULL,
 IsProcessed BIT NOT NULL CONSTRAINT DF_BOOKS_Transaction DEFAULT (0),
 ProcessedDatetime DATETIME2 NULL,
 RowCreationDate DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_Transaction_dt DEFAULT(SYSDATETIME())
@@ -98,6 +104,11 @@ TransactionXML XML NOT NULL,
 Amount MONEY NOT NULL,
 ImportDatetime DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionStaging_ImportDatetime DEFAULT(SYSDATETIME()),
 ImportUniqueIdentifier UNIQUEIDENTIFIER NOT NULL,
+[Type] VARCHAR(50) NULL, 
+[Details] VARCHAR(50) NULL, 
+[Particulars] VARCHAR(50) NULL, 
+[Code] VARCHAR(50) NULL, 
+[Reference] VARCHAR(50) NULL,
 IsProcessed BIT NOT NULL CONSTRAINT DF_BOOKS_TransactionStaging DEFAULT (0),
 ProcessedDatetime DATETIME2 NULL,
 RowCreationDate DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionStaging_dt DEFAULT(SYSDATETIME())
@@ -113,3 +124,19 @@ WithdrawalAmount MONEY NULL,
 RowCreationDate DATETIME2 NOT NULL CONSTRAINT DF_BOOKS_TransactionLineStaging_dt DEFAULT(SYSDATETIME())
 );
 GO
+
+CREATE TABLE BOOKS.TransactionImportRules
+(
+TransactionImportRulesId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_BOOKS_TransactionImportRUles PRIMARY KEY CLUSTERED,
+FromAccountId INT NOT NULL CONSTRAINT FK_BOOKS_TransactionImportRules_FromAccount FOREIGN KEY REFERENCES BOOKS.Account(AccountId),
+ToAccountId INT NOT NULL CONSTRAINT FK_BOOKS_TransactionImportRules_ToAccount FOREIGN KEY REFERENCES BOOKS.Account(AccountId),
+RowCreationDate DATETIME NOT NULL CONSTRAINT DF_BOOKS_TransactionImportRules_dt DEFAULT(GETDATE()),
+AppliesFromDate DATE NOT NULL CONSTRAINT DF_BOOKS_TransactionImportRules_AppliesFromDate DEFAULT('1900-01-01'),
+AppliesUntilDate DATETIME NOT NULL CONSTRAINT DF_BOOKS_TransactionImportRules_AppliesUntilDate DEFAULT('2099-12-31'),
+[Type] VARCHAR(50) NULL,
+[Details] VARCHAR(50) NULL,
+[Particulars] VARCHAR(50) NULL,
+[Code] VARCHAR(50) NULL,
+[Reference] VARCHAR(50) NULL
+);
+GO 
