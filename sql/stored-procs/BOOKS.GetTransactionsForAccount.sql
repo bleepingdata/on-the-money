@@ -12,8 +12,8 @@ BEGIN
 
 
 	-- attempt 2 - the balance is effective based on Bank Processed Date but may include older transactions based on Bank Transaction Date
-	select AccountId, BankTransactionDate, BankProcessedDate, Amount, 
-		sum(Amount) over (partition by AccountId order by ISNULL(t.BankProcessedDate, '2100-01-01'), t.Transactionid) AS [Balance]
+	select t.AccountId, t.BankTransactionDate, t.BankProcessedDate, t.Amount, t_detail.[Type],t_detail.Details,t_detail.Particulars,t_detail.Code,t_detail.Reference,
+		sum(t.Amount) over (partition by t.AccountId order by ISNULL(t.BankProcessedDate, '2100-01-01'), t.Transactionid) AS [Balance]
 		from 
 		(
 			SELECT 0 AS [TransactionId], AccountId, OpeningBalanceDate AS [BankTransactionDate], OpeningBalanceDate AS [BankProcessedDate], OpeningBalance AS [Amount]
@@ -27,6 +27,7 @@ BEGIN
 				WHERE tl.AccountId=@AccountId
 					AND ISNULL(t.BankProcessedDate, '2100-01-01') >= a.OpeningBalanceDate
 			) t
+		INNER JOIN BOOKS.[Transaction] t_detail ON t.TransactionId = t_detail.TransactionId
 		order by AccountId ASC, ISNULL(t.BankProcessedDate, '2100-01-01') DESC, t.Transactionid DESC;
 
 END
