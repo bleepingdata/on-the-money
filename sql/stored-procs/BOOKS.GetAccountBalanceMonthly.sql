@@ -28,8 +28,9 @@ BEGIN
 
 	END
 
-	SELECT a.Description, a.AccountCode, FORMAT(mab.BalanceDate, 'MMM yyyy') AS [BalanceDateDescription], mab.BalanceDate, mab.Balance FROM @MonthlyAccountBalance mab
+	SELECT a.Description, a.AccountTypeId, at.Description AS [AccountType], a.AccountCode, FORMAT(mab.BalanceDate, 'MMM yyyy') AS [BalanceDateDescription], mab.BalanceDate, mab.Balance FROM @MonthlyAccountBalance mab
 		INNER JOIN BOOKS.Account a ON mab.AccountId = a.AccountId
+		INNER JOIN BOOKS.Accounttype at ON a.AccountTypeId = at.AccountTypeId
 		ORDER BY a.AccountCode ASC, mab.BalanceDate ASC;
 
 END
