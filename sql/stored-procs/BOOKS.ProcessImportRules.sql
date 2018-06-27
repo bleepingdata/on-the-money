@@ -1,7 +1,7 @@
 USE OnTheMoney
 GO
 
-ALTER PROC BOOKS.ProcessImportRules @ReprocessAll BIT = 0
+CREATE PROC BOOKS.ProcessImportRules @ReprocessAll BIT = 0
 AS
 BEGIN
 	

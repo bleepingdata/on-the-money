@@ -1,6 +1,6 @@
 USE OnTheMoney
 GO
-ALTER PROC BOOKS.GetAccountBalanceMonthly
+CREATE PROC BOOKS.GetAccountBalanceMonthly
 AS
 BEGIN
 

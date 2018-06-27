@@ -13,15 +13,11 @@ GO
 SET IDENTITY_INSERT BOOKS.AccountType ON;
 GO
 INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (0, 'Unknown Account Type');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (1, 'Cash');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (2, 'Bank');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (3, 'Stock');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (4, 'Mutual Fund');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (5, 'Accounts Receivable');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (6, 'Other Assets');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (7, 'Equity');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (8, 'Income');
-INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (9, 'Expense');
+INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (1, 'Assets');
+INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (2, 'Liabilities');
+INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (3, 'Equity');
+INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (4, 'Income');
+INSERT BOOKS.AccountType(AccountTypeId, Description) VALUES (5, 'Expense');
 SET IDENTITY_INSERT BOOKS.AccountType OFF;
 GO
 
@@ -63,7 +59,15 @@ CREATE TABLE [BOOKS].[LoadImportFile]
 [Foreign Currency Amount] [varchar](50) NULL
 ) ON [PRIMARY]
 GO
-
+CREATE TABLE [BOOKS].[LoadImportFile_Excel_ANZMortgage]
+(
+[Id] BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_BOOKS_LoadImportFile_Excel_ANZMortgage PRIMARY KEY CLUSTERED,
+[Date] [varchar](50) NULL,
+[Details] [varchar](50) NULL,
+[Amount] [varchar](50) NULL,
+[Balance] [varchar](50) NULL
+) ON [PRIMARY]
+GO
 
 CREATE TABLE BOOKS.[Transaction]
 (

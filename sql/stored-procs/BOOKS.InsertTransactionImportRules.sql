@@ -1,7 +1,7 @@
 USE OnTheMoney
 GO
 
-ALTER PROC BOOKS.InsertTransactionImportRule
+CREATE PROC BOOKS.InsertTransactionImportRule
 	@FromAccount varchar(50),
 	@ToAccount varchar(50),
 	@Type VARCHAR(50),

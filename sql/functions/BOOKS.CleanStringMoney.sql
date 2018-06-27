@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP FUNCTION BOOKS.CleanStringMoney
-GO
 
 CREATE FUNCTION BOOKS.CleanStringMoney(@MoneyAsString VARCHAR(50))
 RETURNS MONEY

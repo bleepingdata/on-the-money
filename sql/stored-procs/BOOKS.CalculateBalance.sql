@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP PROC BOOKS.CalculateBalance
-GO
 CREATE PROC BOOKS.CalculateBalance @AccountId INT = NULL
 AS
 BEGIN

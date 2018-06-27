@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP PROC BOOKS.GetTransactionsForAccount
-GO
 CREATE PROC BOOKS.GetTransactionsForAccount @AccountId INT
 AS
 BEGIN

@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP PROC BOOKS.GetAccountBalanceAtDate
-GO
 CREATE PROC BOOKS.GetAccountBalanceAtDate @AccountId INT, @Date DATE
 AS
 BEGIN
