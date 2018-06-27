@@ -1,11 +1,11 @@
 USE OnTheMoney
 GO
-CREATE PROC BOOKS.ProcessImportFile @BankAccountNumber NVARCHAR(56) = NULL, 
+CREATE PROC BOOKS.ProcessImportFile_Excel_ANZMortgage @BankAccountNumber NVARCHAR(56) = NULL, 
 		@BankAccountDescription NVARCHAR(50) = NULL,
 		@RemoveOverlappingTransactions BIT = 0 /* remove txs from same account for the same date(s) */
 AS
 BEGIN
--- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the
+-- Process a bank mortgage export from ANZ. The file contents must already exist in BOOKS.LoadImportFile_Excel_ANZMortgage table. Parameters determine which account the
 -- transactions will be recorded against
 
 	SET NOCOUNT ON;
@@ -29,35 +29,23 @@ BEGIN
 	DECLARE @ImportUniqueIdentifier UNIQUEIDENTIFIER = NEWID();
 
 	-- add to staging tables
-	INSERT BOOKS.[TransactionStaging] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, [Type], [Details], [Particulars], [Code], [Reference])
+	INSERT BOOKS.[TransactionStaging] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, [Details])
 		SELECT 
-			TRY_CONVERT(DATE, [Transaction Date]) AS [BankTransactionDate], TRY_CONVERT(DATE, [Processed Date]) AS [BankProcessedDate],
-			(SELECT [LoadImportFileId]
-					  ,[Transaction Date] AS [TransactionDate]
-					  ,[Processed Date] AS [ProcessedDate]
-					  ,[Type]
+			TRY_CONVERT(DATE, [Date]) AS [BankTransactionDate], TRY_CONVERT(DATE, [Date]) AS [BankProcessedDate],
+			(SELECT [Id]
+					  ,[Date]
 					  ,[Details]
-					  ,[Particulars]
-					  ,[Code]
-					  ,[Reference]
 					  ,[Amount]
 					  ,[Balance]
-					  ,[To/From Account Number] AS [ToFromAccountNumber]
-					  ,[Conversion Charge] AS [ConversionCharge]
-					  ,[Foreign Currency Amount] AS [ForeignCurrencyAmount]
-				  FROM [BOOKS].[LoadImportFile] B
-				  WHERE B.LoadImportFileId = A.LoadImportFileId
+				  FROM [BOOKS].[LoadImportFile_Excel_ANZMortgage] B
+				  WHERE B.Id = A.Id
 				  FOR XML PATH ('Row'), Type
 				  ) 
 				AS [TransactionXML],
 			BOOKS.CleanStringMoney([Amount]) AS [Amount],
 			@ImportUniqueIdentifier,
-			[Type],
-			[Details],
-			[Particulars],
-			[Code],
-			[Reference]
-		FROM [BOOKS].[LoadImportFile] A
+			[Details]
+		FROM [BOOKS].[LoadImportFile_Excel_ANZMortgage] A
 
 	INSERT [BOOKS].TransactionLineStaging (TransactionStagingId, AccountId, DepositAmount, WithdrawalAmount)
 		SELECT TransactionStagingId, 

@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP PROC BOOKS.GetAccountMovementMonthly
-GO
 CREATE PROC BOOKS.GetAccountMovementMonthly
 AS
 BEGIN

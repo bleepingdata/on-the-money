@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP PROC BOOKS.GetAccountMovementBetweenDates
-GO
 CREATE PROC BOOKS.GetAccountMovementBetweenDates @AccountId INT, @StartDate DATE, @EndDate DATE
 AS
 BEGIN

@@ -1,7 +1,5 @@
 USE OnTheMoney
 GO
-DROP PROC BOOKS.PrepareForImportFile
-GO
 CREATE PROC BOOKS.PrepareForImportFile @BankAccountNumber NVARCHAR(56) = NULL, @BankAccountDescription NVARCHAR(50) = NULL
 AS
 BEGIN
@@ -28,6 +26,7 @@ BEGIN
 
 	-- truncate the table that will hold the imported data
 	TRUNCATE TABLE BOOKS.LoadImportFile;
+	TRUNCATE TABLE BOOKS.LoadImportFile_Excel_ANZMortgage;
 	DELETE BOOKS.TransactionLineStaging WHERE 1=1;
 	DELETE BOOKS.TransactionStaging WHERE 1=1;
 	
