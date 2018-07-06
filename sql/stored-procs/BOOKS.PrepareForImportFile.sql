@@ -1,6 +1,6 @@
 USE OnTheMoney
 GO
-CREATE PROC BOOKS.PrepareForImportFile @BankAccountNumber NVARCHAR(56) = NULL, @BankAccountDescription NVARCHAR(50) = NULL
+CREATE OR ALTER PROC BOOKS.PrepareForImportFile @BankAccountNumber NVARCHAR(56) = NULL, @BankAccountDescription NVARCHAR(50) = NULL
 AS
 BEGIN
 -- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the
@@ -12,16 +12,16 @@ BEGIN
 	BEGIN
 		RAISERROR('All parameters for proc are null or missing', 15,1);
 	END
-
+   
 	-- get the bank account id
 	DECLARE @BankAccountId INT = (SELECT AccountId FROM BOOKS.Account 
 									WHERE 
-										BankAccountNumber = ISNULL(@BankAccountNumber, BankAccountNumber) 
-										AND Description = ISNULL(@BankAccountDescription, Description)
+										BankAccountNumber = ISNULL(RTRIM(@BankAccountNumber), BankAccountNumber) 
+										AND Description = ISNULL(RTRIM(@BankAccountDescription), Description)
 										AND (@BankAccountNumber IS NOT NULL OR @BankAccountDescription IS NOT NULL));
 	IF @BankAccountId IS NULL
 	BEGIN
-		RAISERROR('Unable to find BOOKS.Account entry for bank account %s, description %s', 15,1, @BankAccountNumber, @BankAccountDescription);
+		RAISERROR('Unable to find BOOKS.Account entry for bank account %s, description %s', 15, 1, @BankAccountNumber, @BankAccountDescription);
 	END
 
 	-- truncate the table that will hold the imported data

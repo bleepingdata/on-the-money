@@ -8,9 +8,15 @@ from argparse import ArgumentParser
 import os.path
 
 parser = ArgumentParser()
-bankaccountargs = parser.add_mutually_exclusive_group()
 parser.add_argument("-f", "--file", dest="bankexcelfile", required=True,
                     help="the file name of the ANZ excel file to import", metavar="FILE")
+parser.add_argument("-dsn", "--datasourcename", dest="datasourcename", required=True,
+                    help="data source name of the database server")
+parser.add_argument("-u", "--username", dest="username", required=True,
+                    help="username for the database server connection")
+parser.add_argument("-p", "--password", dest="password", required=True,
+                    help="password for the database server connection")
+bankaccountargs = parser.add_mutually_exclusive_group()
 bankaccountargs.add_argument("-ban", "--bankaccountnumber", dest="bankaccountnumber", required=False,
                     help="load transactions into specified bank account")
 bankaccountargs.add_argument("-bad", "--bankaccountdescription", dest="bankaccountdescription", required=False,
@@ -26,12 +32,21 @@ except IOError as e:
 
 # Set parameter-related variables
 bankexcelfile = args.bankexcelfile
+datasourcename = args.datasourcename
+username = args.username
+password = args.password
 bankaccountnumber = args.bankaccountnumber
 bankaccountdescription = args.bankaccountdescription
 removeoverlappingtransactions = True; 
 
 # Create the SQL connection object
-engine = create_engine('mssql://LOCALHOST\\SQLEXPRESS/OnTheMoney?trusted_connection=yes;driver=SQL+Server+Native+Client+10.0') 
+
+# Connection From Windows
+# engine = create_engine('mssql://LOCALHOST\\SQLEXPRESS/OnTheMoney?trusted_connection=yes;driver=SQL+Server+Native+Client+10.0') 
+
+#Connection From MacOS using FreeTDS and unixODBC https://github.com/mkleehammer/pyodbc/wiki/Connecting-to-SQL-Server-from-Mac-OSX
+pyodbc_connection='mssql+pyodbc://{}:{}@{}'.format(username, password, datasourcename)
+engine = create_engine(pyodbc_connection) 
 
 # Grab a pyodbc cursor to use for calling stored procs
 cursor = engine.raw_connection().cursor()
