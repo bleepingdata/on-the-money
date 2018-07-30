@@ -1,5 +1,3 @@
-USE OnTheMoney
-GO
 
 CREATE PROC BOOKS.ProcessImportRules @ReprocessAll BIT = 0
 AS

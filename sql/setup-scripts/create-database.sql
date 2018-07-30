@@ -1,7 +1,2 @@
-USE [master]
-GO
 
-CREATE DATABASE [OnTheMoney];
-GO
-ALTER AUTHORIZATION ON DATABASE::OnTheMoney TO [sa]
-GO
+CREATE DATABASE onthemoney;

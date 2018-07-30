@@ -1,15 +1,12 @@
-USE OnTheMoney
-GO
-
-CREATE PROC BOOKS.InsertTransactionImportRule
-	@FromAccount varchar(50),
-	@ToAccount varchar(50),
-	@Type VARCHAR(50),
-	@Details VARCHAR(50),
-	@Particulars VARCHAR(50),
-	@Code VARCHAR(50),
-	@Reference VARCHAR(50)
-AS
+CREATE OR REPLACE FUNCTION BOOKS.InsertTransactionImportRule
+	(FromAccount varchar(50),
+	ToAccount varchar(50),
+	Type VARCHAR(50),
+	Details VARCHAR(50),
+	Particulars VARCHAR(50),
+	Code VARCHAR(50),
+	Reference VARCHAR(50))
+RETURNS void AS $$
 BEGIN
 
 	SET NOCOUNT ON;
@@ -25,5 +22,5 @@ BEGIN
 
 	INSERT BOOKS.TransactionImportRules (FromAccountId, ToAccountId, [Type], [Details], Particulars, Code, Reference)
 		VALUES (@FromAccountId, @ToAccountId, @Type, @Details, @Particulars, @Code, @Reference);
-END
-GO
+end;
+$$ LANGUAGE plpgsql;
