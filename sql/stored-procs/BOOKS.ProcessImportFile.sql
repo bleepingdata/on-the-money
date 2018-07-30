@@ -1,8 +1,8 @@
-USE OnTheMoney
-GO
-CREATE PROC BOOKS.ProcessImportFile @BankAccountNumber NVARCHAR(56) = NULL, 
-		@BankAccountDescription NVARCHAR(50) = NULL,
-		@RemoveOverlappingTransactions BIT = 0 /* remove txs from same account for the same date(s) */
+CREATE or replace function BOOKS.ProcessImportFile (BankAccountNumber VARCHAR(56) = NULL, 
+		BankAccountDescription VARCHAR(50) = NULL,
+		RemoveOverlappingTransactions BOOLEAN = FALSE /* remove txs from same account for the same date(s) */
+		)
+returns VOID as $$
 AS
 BEGIN
 -- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the
@@ -29,49 +29,49 @@ BEGIN
 	DECLARE @ImportUniqueIdentifier UNIQUEIDENTIFIER = NEWID();
 
 	-- add to staging tables
-	INSERT BOOKS.[TransactionStaging] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, [Type], [Details], [Particulars], [Code], [Reference])
+	INSERT into BOOKS.TransactionStaging (BankTransactionDate, BankProcessedDate, Amount, ImportUniqueIdentifier, Type, Details, Particulars, Code, Reference)
 		SELECT 
-			TRY_CONVERT(DATE, [Transaction Date]) AS [BankTransactionDate], TRY_CONVERT(DATE, [Processed Date]) AS [BankProcessedDate],
-			(SELECT [LoadImportFileId]
-					  ,[Transaction Date] AS [TransactionDate]
-					  ,[Processed Date] AS [ProcessedDate]
-					  ,[Type]
-					  ,[Details]
-					  ,[Particulars]
-					  ,[Code]
-					  ,[Reference]
-					  ,[Amount]
-					  ,[Balance]
-					  ,[To/From Account Number] AS [ToFromAccountNumber]
-					  ,[Conversion Charge] AS [ConversionCharge]
-					  ,[Foreign Currency Amount] AS [ForeignCurrencyAmount]
-				  FROM [BOOKS].[LoadImportFile] B
+			cast("Transaction Date" as DATE) BankTransactionDate, cast ("Processed Date" as date) AS BankProcessedDate,
+			/*(SELECT LoadImportFileId
+					  ,"Transaction Date" AS TransactionDate
+					  ,"Processed Date" AS ProcessedDate
+					  ,Type
+					  ,Details
+					  ,Particulars
+					  ,Code
+					  ,Reference
+					  ,Amount
+					  ,Balance
+					  ,"To/From Account Number" AS ToFromAccountNumber
+					  ,"Conversion Charge" AS ConversionCharge
+					  ,"Foreign Currency Amount" AS ForeignCurrencyAmount
+				  FROM BOOKS.LoadImportFile B
 				  WHERE B.LoadImportFileId = A.LoadImportFileId
 				  FOR XML PATH ('Row'), Type
 				  ) 
-				AS [TransactionXML],
-			BOOKS.CleanStringMoney([Amount]) AS [Amount],
+				AS TransactionXML,*/
+			BOOKS.CleanStringMoney(Amount) AS Amount,
 			@ImportUniqueIdentifier,
-			[Type],
-			[Details],
-			[Particulars],
-			[Code],
-			[Reference]
-		FROM [BOOKS].[LoadImportFile] A
+			Type,
+			Details,
+			Particulars,
+			Code,
+			Reference
+		FROM BOOKS.LoadImportFile A
 
-	INSERT [BOOKS].TransactionLineStaging (TransactionStagingId, AccountId, DepositAmount, WithdrawalAmount)
+	INSERT BOOKS.TransactionLineStaging (TransactionStagingId, AccountId, DepositAmount, WithdrawalAmount)
 		SELECT TransactionStagingId, 
-				CASE WHEN Amount >= 0 THEN @BankAccountId ELSE 0 END AS [AccountId],
-				ABS(Amount) AS [DepositAmount],
+				CASE WHEN Amount >= 0 THEN @BankAccountId ELSE 0 END AS AccountId,
+				ABS(Amount) AS DepositAmount,
 				0 AS WithdrawalAmount
-			FROM BOOKS.[TransactionStaging] 
+			FROM BOOKS.TransactionStaging 
 			WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier
 		UNION ALL
 		SELECT TransactionStagingId, 
-				CASE WHEN Amount < 0 THEN @BankAccountId ELSE 0 END AS [AccountId],
+				CASE WHEN Amount < 0 THEN @BankAccountId ELSE 0 END AS AccountId,
 				0 AS DepositAmount,
-				ABS(Amount) AS [WithdrawalAmount]
-			FROM BOOKS.[TransactionStaging] 
+				ABS(Amount) AS WithdrawalAmount
+			FROM BOOKS.TransactionStaging 
 			WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier
 			ORDER BY TransactionStagingId ASC;
 
@@ -81,7 +81,7 @@ BEGIN
 
 		INSERT @TransactionIdsToDelete (TransactionId) 
 		SELECT DISTINCT t.TransactionId
-			FROM BOOKS.[Transaction] t
+			FROM BOOKS.Transaction t
 				INNER JOIN BOOKS.TransactionLine tl ON t.TransactionId = tl.TransactionId
 				WHERE tl.AccountId = @BankAccountId AND t.BankTransactionDate 
 					IN (SELECT BankTransactionDate 
@@ -89,7 +89,7 @@ BEGIN
 							WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier);
 
 		DELETE BOOKS.TransactionLine WHERE TransactionId IN (SELECT TransactionId FROM @TransactionIdsToDelete);
-		DELETE BOOKS.[Transaction] WHERE TransactionId IN (SELECT TransactionId FROM @TransactionIdsToDelete);
+		DELETE BOOKS.Transaction WHERE TransactionId IN (SELECT TransactionId FROM @TransactionIdsToDelete);
 	END
 	ELSE
 	BEGIN
@@ -100,51 +100,52 @@ BEGIN
 		SELECT @Dupes = COUNT(*) FROM
 		(
 		SELECT ts.BankTransactionDate, ts.BankProcessedDate, tls.DepositAmount, tls.WithdrawalAmount, tls.AccountId
-			FROM BOOKS.[TransactionStaging] ts
-			INNER JOIN BOOKS.[TransactionLineStaging] tls ON ts.TransactionStagingId = tls.TransactionStagingId
+			FROM BOOKS.TransactionStaging ts
+			INNER JOIN BOOKS.TransactionLineStaging tls ON ts.TransactionStagingId = tls.TransactionStagingId
 		INTERSECT 
 		SELECT t.BankTransactionDate, t.BankProcessedDate, tl.DepositAmount, tl.WithdrawalAmount, tl.AccountId
-			FROM BOOKS.[Transaction] t
-			INNER JOIN BOOKS.[TransactionLine] tl ON t.TransactionId = tl.TransactionId
+			FROM BOOKS.Transaction t
+			INNER JOIN BOOKS.TransactionLine tl ON t.TransactionId = tl.TransactionId
 		) dupes
 
 		IF @Dupes > @MAX_ALLOWABLE_DUPES
 		BEGIN
-			RAISERROR('Unable to import transactions because %i duplicates were found in BOOKS.[TransactionLineStaging]', 15, 1, @Dupes) WITH NOWAIT;
+			RAISERROR('Unable to import transactions because %i duplicates were found in BOOKS.TransactionLineStaging', 15, 1, @Dupes) WITH NOWAIT;
 			RETURN 1;
 		END
 	END
 
 	-- Import into Transaction tables
-	INSERT BOOKS.[Transaction] (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, [Type], [Details], [Particulars], [Code], [Reference])
+	INSERT BOOKS.Transaction (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, Type, Details, Particulars, Code, Reference)
 	SELECT 
-		[BankTransactionDate], 
-		[BankProcessedDate],
-		[TransactionXML],
-		[Amount],
+		BankTransactionDate, 
+		BankProcessedDate,
+		TransactionXML,
+		Amount,
 		ImportUniqueIdentifier,
-		[Type],
-		[Details],
-		[Particulars],
-		[Code],
-		[Reference]
-		FROM [BOOKS].[TransactionStaging] A
+		Type,
+		Details,
+		Particulars,
+		Code,
+		Reference
+		FROM BOOKS.TransactionStaging A
 
-	INSERT [BOOKS].TransactionLine (TransactionId, AccountId, DepositAmount, WithdrawalAmount)
+	INSERT BOOKS.TransactionLine (TransactionId, AccountId, DepositAmount, WithdrawalAmount)
 		SELECT TransactionId, 
-			CASE WHEN Amount >= 0 THEN @BankAccountId ELSE 0 END AS [AccountId],
-			ABS(Amount) AS [DepositAmount],
+			CASE WHEN Amount >= 0 THEN @BankAccountId ELSE 0 END AS AccountId,
+			ABS(Amount) AS DepositAmount,
 			0 AS WithdrawalAmount
-			FROM BOOKS.[Transaction] 
+			FROM BOOKS.Transaction 
 			WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier
 		UNION ALL
 		SELECT TransactionId, 
-			CASE WHEN Amount < 0 THEN @BankAccountId ELSE 0 END AS [AccountId],
+			CASE WHEN Amount < 0 THEN @BankAccountId ELSE 0 END AS AccountId,
 			0 AS DepositAmount,
-			ABS(Amount) AS [WithdrawalAmount]
-			FROM BOOKS.[Transaction] 
+			ABS(Amount) AS WithdrawalAmount
+			FROM BOOKS.Transaction 
 			WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier
 			ORDER BY TransactionId ASC;
 
 
-END
+END;
+$$ LANGUAGE plpgsql;

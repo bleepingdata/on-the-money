@@ -1,14 +1,26 @@
-USE OnTheMoney
-GO
-
-CREATE FUNCTION BOOKS.CleanStringMoney(@MoneyAsString VARCHAR(50))
-RETURNS MONEY
+CREATE OR replace FUNCTION BOOKS.CleanStringMoney(MoneyAsString VARCHAR(50))
+RETURNS MONEY as $$
+declare amount money;
 BEGIN
-DECLARE @WorkingString VARCHAR(50);
+DECLARE WorkingString VARCHAR(50);
 
-SET @WorkingString = RTRIM(@MoneyAsString);
-SET @WorkingString = REPLACE(@WorkingString, '$', '');
-SET @WorkingString = REPLACE(@WorkingString, ' ', '');
+SELECT RTRIM($1) into WorkingString;
+--SET WorkingString = REPLACE(WorkingString, '$', '');
+--SET WorkingString = REPLACE(WorkingString, ' ', '');
 
-RETURN TRY_CONVERT(MONEY, @WorkingString);
-END
+--SELECT CAST(WorkingString as MONEY) into amount;
+
+return amount;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR replace FUNCTION BOOKS.CleanStringMoney(MoneyAsString VARCHAR(50))
+RETURNS MONEY as $$
+declare amount money;
+BEGIN
+DECLARE WorkingString VARCHAR(50);
+return amount;
+END;
+$$ LANGUAGE plpgsql;
