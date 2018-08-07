@@ -1,0 +1,1 @@
+drop sequence books.importseq;

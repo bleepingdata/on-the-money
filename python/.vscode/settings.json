@@ -1,3 +1,1 @@
-{
-    "python.pythonPath": "C:\\Users\\Stephen\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe"
-}
+{ "pgsql.connection": "postgres://postgres:lilian99@localhost:5432/onthemoney" }

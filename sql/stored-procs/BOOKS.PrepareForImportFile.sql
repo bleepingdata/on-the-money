@@ -1,35 +1,50 @@
-USE OnTheMoney
-GO
-CREATE OR ALTER PROC BOOKS.PrepareForImportFile @BankAccountNumber NVARCHAR(56) = NULL, @BankAccountDescription NVARCHAR(50) = NULL
-AS
-BEGIN
+create
+or replace
+function BOOKS.PrepareForImportFile ( nBankAccountNumber varchar(56) = null, nBankAccountDescription varchar(50) = null ) returns void as $$ declare nBankAccountId int;
+
+ begin
 -- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the
 -- transactions will be recorded against
+-- get the bank account id
+ select
+	AccountId into
+		nBankAccountId
+	from
+		BOOKS.Account
+	where
+		BankAccountNumber = coalesce( rtrim(nBankAccountNumber), BankAccountNumber )
+		and Description = coalesce( rtrim(nBankAccountDescription), Description )
+		and ( nBankAccountNumber is not null
+		or nBankAccountDescription is not null );
 
-	SET NOCOUNT ON;
+ if nBankAccountId is null then raise exception 'Unable to find BOOKS.Account entry for bank account %, description %',
+nBankAccountNumber,
+nBankAccountDescription;
 
-	IF @BankAccountNumber IS NULL AND @BankAccountDescription IS NULL
-	BEGIN
-		RAISERROR('All parameters for proc are null or missing', 15,1);
-	END
-   
-	-- get the bank account id
-	DECLARE @BankAccountId INT = (SELECT AccountId FROM BOOKS.Account 
-									WHERE 
-										BankAccountNumber = ISNULL(RTRIM(@BankAccountNumber), BankAccountNumber) 
-										AND Description = ISNULL(RTRIM(@BankAccountDescription), Description)
-										AND (@BankAccountNumber IS NOT NULL OR @BankAccountDescription IS NOT NULL));
-	IF @BankAccountId IS NULL
-	BEGIN
-		RAISERROR('Unable to find BOOKS.Account entry for bank account %s, description %s', 15, 1, @BankAccountNumber, @BankAccountDescription);
-	END
 
-	-- truncate the table that will hold the imported data
-	TRUNCATE TABLE BOOKS.LoadImportFile;
-	TRUNCATE TABLE BOOKS.LoadImportFile_Excel_ANZMortgage;
-	DELETE BOOKS.TransactionLineStaging WHERE 1=1;
-	DELETE BOOKS.TransactionStaging WHERE 1=1;
-	
-	RETURN;
+end if;
+-- truncate the table that will hold the imported data
+ truncate
+	table
+		BOOKS.LoadImportFile;
 
-END
+ truncate
+	table
+		BOOKS.LoadImportFile_Excel_ANZMortgage;
+
+ delete from
+	BOOKS.TransactionLineStaging
+where
+	1 = 1;
+
+ delete from
+	BOOKS.TransactionStaging
+where
+	1 = 1;
+
+ return;
+
+
+end;
+
+ $$ language plpgsql;
