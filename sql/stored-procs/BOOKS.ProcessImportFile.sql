@@ -5,7 +5,7 @@ CREATE or replace function BOOKS.ProcessImportFile (sBankAccountNumber VARCHAR(5
 returns VOID as $$
 declare 
 	nBankAccountId INT;
-	nUniqueIdentifier INT;
+	nImportSeq INT;
 BEGIN
 -- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the
 -- transactions will be recorded against
@@ -26,54 +26,38 @@ BEGIN
 --		RAISERROR('Unable to find BOOKS.Account entry for bank account %s, description %s', 15,1, @BankAccountNumber, @BankAccountDescription);
 --	end if;
 
-	select BOOKS.ImportSeq()
-	into nUniqueIdentifier;
+	select nextval('books.ImportSeq')
+	into nImportSeq;
 	
 	-- add to staging tables
-	INSERT into BOOKS.TransactionStaging (BankTransactionDate, BankProcessedDate, Amount, ImportUniqueIdentifier, Type, Details, Particulars, Code, Reference)
+	INSERT into BOOKS.TransactionStaging (BankTransactionDate, BankProcessedDate, transactionxml, amount, ImportSeq, Type, Details, Particulars, Code, Reference)
 		SELECT
-			cast("Transaction Date" as DATE) BankTransactionDate, cast ("Processed Date" as date) AS BankProcessedDate,
-			/*(SELECT LoadImportFileId
-					  ,"Transaction Date" AS TransactionDate
-					  ,"Processed Date" AS ProcessedDate
-					  ,Type
-					  ,Details
-					  ,Particulars
-					  ,Code
-					  ,Reference
-					  ,Amount
-					  ,Balance
-					  ,"To/From Account Number" AS ToFromAccountNumber
-					  ,"Conversion Charge" AS ConversionCharge
-					  ,"Foreign Currency Amount" AS ForeignCurrencyAmount
-				  FROM BOOKS.LoadImportFile B
-				  WHERE B.LoadImportFileId = A.LoadImportFileId
-				  FOR XML PATH ('Row'), Type
-				  ) 
-				AS TransactionXML,*/
-			BOOKS.CleanStringMoney(Amount) AS Amount,
-			nUniqueIdentifier,
-			Type,
-			Details,
-			Particulars,
-			Code,
-			Reference
+			cast("Transaction Date" as date), 
+			cast ("Processed Date" as date),
+			'<xml>blah</xml>',
+			cast(A."Amount" as money),--BOOKS.CleanStringMoney(A.Amount),
+			nImportSeq,
+			"Type",
+			"Details",
+			"Particulars",
+			"Code",
+			"Reference"
 		FROM BOOKS.LoadImportFile A;
 
 	INSERT into BOOKS.TransactionLineStaging (TransactionStagingId, AccountId, DepositAmount, WithdrawalAmount)
 		SELECT TransactionStagingId, 
-				CASE WHEN Amount >= 0 THEN nBankAccountId ELSE 0 END AS AccountId,
-				ABS(Amount) AS DepositAmount,
-				0 AS WithdrawalAmount
+				CASE WHEN amount >= 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
+				abs("amount") AS DepositAmount,
+				0.0 AS WithdrawalAmount
 			FROM BOOKS.TransactionStaging 
-			WHERE ImportUniqueIdentifier = nUniqueIdentifier
+			WHERE ImportSeq = nImportSeq
 		UNION ALL
 		SELECT TransactionStagingId, 
-				CASE WHEN Amount < 0 THEN nBankAccountId ELSE 0 END AS AccountId,
-				0 AS DepositAmount,
-				ABS(Amount) AS WithdrawalAmount
+				CASE WHEN Amount < 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
+				0.0 AS DepositAmount,
+				abs(Amount) AS WithdrawalAmount
 			FROM BOOKS.TransactionStaging 
-			WHERE ImportUniqueIdentifier = nUniqueIdentifier
+			WHERE ImportSeq = nImportSeq
 			ORDER BY TransactionStagingId ASC;
 --
 --	IF bRemoveOverlappingTransactions == true
@@ -117,13 +101,13 @@ BEGIN
 --	END
 
 	-- Import into Transaction tables
-	INSERT into BOOKS.Transaction (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportUniqueIdentifier, Type, Details, Particulars, Code, Reference)
+	INSERT into BOOKS.Transaction (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportSeq, Type, Details, Particulars, Code, Reference)
 	SELECT 
 		BankTransactionDate, 
 		BankProcessedDate,
 		TransactionXML,
 		Amount,
-		ImportUniqueIdentifier,
+		ImportSeq,
 		Type,
 		Details,
 		Particulars,
@@ -133,18 +117,18 @@ BEGIN
 
 	INSERT into BOOKS.TransactionLine (TransactionId, AccountId, DepositAmount, WithdrawalAmount)
 		SELECT TransactionId, 
-			CASE WHEN Amount >= 0 THEN @BankAccountId ELSE 0 END AS AccountId,
+			CASE WHEN Amount >= 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
 			ABS(Amount) AS DepositAmount,
-			0 AS WithdrawalAmount
+			0.0 AS WithdrawalAmount
 			FROM BOOKS.Transaction 
-			WHERE ImportUniqueIdentifier = nUniqueIdentifier
+			WHERE ImportSeq = nImportSeq
 		UNION ALL
 		SELECT TransactionId, 
-			CASE WHEN Amount < 0 THEN @BankAccountId ELSE 0 END AS AccountId,
-			0 AS DepositAmount,
+			CASE WHEN Amount < 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
+			0.0 AS DepositAmount,
 			ABS(Amount) AS WithdrawalAmount
 			FROM BOOKS.Transaction 
-			WHERE ImportUniqueIdentifier = nUniqueIdentifier
+			WHERE ImportSeq = nImportSeq
 			ORDER BY TransactionId ASC;
 
 
