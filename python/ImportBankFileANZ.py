@@ -32,7 +32,7 @@ s_username = args.username
 s_password = args.password
 s_bankaccountnumber = args.bankaccountnumber
 s_bankaccountdescription = args.bankaccountdescription
-s_removeoverlappingtransactions = True
+b_removeoverlappingtransactions = True
  
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
 print ("Opened database successfully")
@@ -67,8 +67,8 @@ engine = create_engine('postgresql://postgres:lilian99@localhost:5432/onthemoney
 # cursor = engine.raw_connection().cursor()
 
 # # Prepare for the import (this truncates a table and checks if accounts exists)
-# cursor.execute("BOOKS.PrepareForImportFile ?, ?", [bankaccountnumber, bankaccountdescription])
-# cursor.commit()
+#cursor.execute("BOOKS.PrepareForImportFile ?, ?", [bankaccountnumber, bankaccountdescription])
+#cursor.commit()
 
 # # Load spreadsheet
 xl = pd.ExcelFile(s_bankexcelfile)
@@ -78,4 +78,11 @@ dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str}
 dfTransactions.to_sql(name='loadimportfile', if_exists='append',con=engine, schema='books', index=False, chunksize=1)
 
 # # Process the file
-# cursor.execute("BOOKS.ProcessImportFile ?, ?, ?", [bankaccountnumber, bankaccountdescription, removeoverlappingtransactions])
+conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
+print ("Opened database successfully")
+
+cur = conn.cursor()
+cur.execute("select books.ProcessImportFile (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
+conn.commit
+
+conn.close()
