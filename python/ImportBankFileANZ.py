@@ -8,6 +8,9 @@ import argparse
 from argparse import ArgumentParser
 import os.path
 
+
+print ("File Import started")
+
 parser = ArgumentParser()
 parser.add_argument("-f", "--file", dest="bankexcelfile", required=True,
                     help="the file name of the ANZ excel file to import", metavar="FILE")
@@ -16,6 +19,10 @@ parser.add_argument("-db", "--databasename", dest="databasename", required=True,
 parser.add_argument("-u", "--username", dest="username", required=True,
                     help="username for the database server connection")
 parser.add_argument("-p", "--password", dest="password", required=True,
+                    help="password for the database server connection")
+parser.add_argument("-host", "--host", dest="host", required=False, default='localhost',
+                    help="password for the database server connection")
+parser.add_argument("-port", "--port", dest="port", required=False, default=5432,
                     help="password for the database server connection")
 bankaccountargs = parser.add_mutually_exclusive_group()
 bankaccountargs.add_argument("-ban", "--bankaccountnumber", dest="bankaccountnumber", required=False,
@@ -34,16 +41,21 @@ s_bankaccountnumber = args.bankaccountnumber
 s_bankaccountdescription = args.bankaccountdescription
 b_removeoverlappingtransactions = True
  
+print ("File is %s" %(s_bankexcelfile))
+
+ # Connect to DB
+print ("Connecting to DB for Prepare")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
-print ("Opened database successfully")
 
 cur = conn.cursor()
 
+# Get ready for import (truncate load tables, etc)
 cur.execute("select BOOKS.PrepareForImportFile (NULL,'Current Account');")
 conn.commit
-
 conn.close()
+print ("Committed and closed")
 
+# Check file exists
 try:
     with open(args.bankexcelfile) as file:
         pass
@@ -52,37 +64,29 @@ except IOError as e:
     raise
 
 
-# # Create the SQLconnection object
+# Create the SQLconnection object (postgresql://username:password@host:port/database)
+s_alchemy_connection = "postgresql://{}:{}@localhost:5432/{}".format(s_username, s_password, s_databasename)
+engine = create_engine(s_alchemy_connection)
 
-# # Connection From Windows
-
-engine = create_engine('postgresql://postgres:lilian99@localhost:5432/onthemoney')
-# engine = create_engine('mssql://LOCALHOST\\SQLEXPRESS/OnTheMoney?trusted_connection=yes;driver=SQL+Server+Native+Client+10.0') 
-
-#Connection From MacOS using FreeTDS and unixODBC https://github.com/mkleehammer/pyodbc/wiki/Connecting-to-SQL-Server-from-Mac-OSX
-# pyodbc_connection='mssql+pyodbc://{}:{}@{}'.format(username, password, datasourcename)
-# engine = create_engine(pyodbc_connection) 
-
-# # Grab a pyodbc cursor to use for calling stored procs
-# cursor = engine.raw_connection().cursor()
-
-# # Prepare for the import (this truncates a table and checks if accounts exists)
-#cursor.execute("BOOKS.PrepareForImportFile ?, ?", [bankaccountnumber, bankaccountdescription])
-#cursor.commit()
-
-# # Load spreadsheet
+# Load spreadsheet
+print ("Loading Excel into data frame")
 xl = pd.ExcelFile(s_bankexcelfile)
-
-# # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
 dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
+print ("Complete")
+
+# Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
+
+print ("Inserting data frame into load table")
 dfTransactions.to_sql(name='loadimportfile', if_exists='append',con=engine, schema='books', index=False, chunksize=1)
+print ("Complete")
 
-# # Process the file
+# Process the file
+print ("Connecting to DB for processing")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
-print ("Opened database successfully")
-
 cur = conn.cursor()
 cur.execute("select books.ProcessImportFile (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
 conn.commit
-
 conn.close()
+print ("Committed and closed")
+
+print ("File Import complete")
