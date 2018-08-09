@@ -1,5 +1,4 @@
 import pandas as pd
-#import pyodbc
 import psycopg2
 import sqlalchemy as sa
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, ForeignKey
@@ -37,6 +36,8 @@ s_bankexcelfile = args.bankexcelfile
 s_databasename = args.databasename
 s_username = args.username
 s_password = args.password
+s_host = args.host
+n_port = args.port
 s_bankaccountnumber = args.bankaccountnumber
 s_bankaccountdescription = args.bankaccountdescription
 b_removeoverlappingtransactions = True
@@ -45,7 +46,7 @@ print ("File is %s" %(s_bankexcelfile))
 
  # Connect to DB
 print ("Connecting to DB for Prepare")
-conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
+conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 
 cur = conn.cursor()
 
