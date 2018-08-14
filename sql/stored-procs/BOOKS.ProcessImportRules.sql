@@ -1,30 +1,27 @@
 
-CREATE PROC BOOKS.ProcessImportRules @ReprocessAll BIT = 0
-AS
-BEGIN
+create or replace function books.processimportrules ()
+RETURNS void AS $$
+begin
 	
-	UPDATE to_transaction_lines
-	SET AccountId = from_transaction_lines.ToAccountId -- SELECT *
-	FROM BOOKS.TransactionLine to_transaction_lines
-	INNER JOIN
+	update books.transactionline as to_transaction_lines
+	set accountid = from_transaction_lines.toaccountid -- select *
+	from 
 	(
-		SELECT tl.AccountId AS [FromAccountId], tl.Transactionid, tir.ToAccountID
-		FROM BOOKS.TransactionLine tl
-			INNER JOIN BOOKS.[Transaction] t ON tl.TransactionId = t.TransactionId
-			INNER JOIN BOOKS.TransactionImportRules tir ON tl.AccountID = tir.FromAccountId 
-					AND tir.AppliesFromDate <= t.BankTransactionDate 
-					AND tir.AppliesUntilDate >= t.BankTransactionDate
-		WHERE 
-			(t.[Type] = tir.[Type] OR tir.[Type] IS NULL)
-			AND (t.[Details] = tir.[Details] OR tir.[Details] IS NULL)
-			AND (t.[Particulars] = tir.[Particulars] OR tir.[Particulars] IS NULL)
-			AND (t.[Code] = tir.[Code] OR tir.[Code] IS NULL)
-			AND (t.[Reference] = tir.[Reference] OR tir.[Reference] IS NULL)
+		select tl.accountid as fromaccountid, tl.transactionid, tir.toaccountid
+		from books.transactionline tl
+			inner join books.transaction t on tl.transactionid = t.transactionid
+			inner join books.transactionimportrules tir on tl.accountid = tir.fromaccountid 
+					and tir.appliesfromdate <= t.banktransactiondate 
+					and tir.appliesuntildate >= t.banktransactiondate
+		where 
+			(t.type = tir.type or tir.type is null)
+			and (t.details = tir.details or tir.details is null)
+			and (t.particulars = tir.particulars or tir.particulars is null)
+			and (t.code = tir.code or tir.code is null)
+			and (t.reference = tir.reference or tir.reference is null)
 		) from_transaction_lines
-		ON from_transaction_lines.TransactionId = to_transaction_lines.TransactionId
-			AND from_transaction_lines.FromAccountId <> to_transaction_lines.AccountId
-		WHERE 
-			(@ReprocessAll = 1 OR to_transaction_lines.AccountId = 0) -- process only AccountId 0 (unknown) unless @ReprocessAll is 1 (true)
+		WHERE from_transaction_lines.transactionid = to_transaction_lines.transactionid
+			and from_transaction_lines.fromaccountid <> to_transaction_lines.accountid;
 
-END
-GO
+END;
+$$ language plpgsql;
