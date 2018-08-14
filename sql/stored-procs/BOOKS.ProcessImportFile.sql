@@ -1,136 +1,136 @@
-CREATE or replace function BOOKS.ProcessImportFile (sBankAccountNumber VARCHAR(56) = NULL, 
-		sBankAccountDescription VARCHAR(50) = NULL,
-		bRemoveOverlappingTransactions BOOLEAN = FALSE /* remove txs from same account for the same date(s) */
+create or replace function books.processimportfile (sbankaccountnumber varchar(56) = null, 
+		sbankaccountdescription varchar(50) = null,
+		bremoveoverlappingtransactions boolean = false /* remove txs from same account for the same date(s) */
 		)
-returns VOID as $$
+returns void as $$
 declare 
-	nBankAccountId INT;
-	nImportSeq INT;
-BEGIN
--- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the
+	nbankaccountid int;
+	nimportseq int;
+begin
+-- process a bank file from anz. the file contents must already exist in books.loadimportfile table. parameters determine which account the
 -- transactions will be recorded against
 
---	IF @BankAccountNumber IS NULL AND @BankAccountDescription IS NULL
---	BEGIN
---		RAISERROR('All parameters for proc are null or missing', 15,1);
---	END
+--	if @bankaccountnumber is null and @bankaccountdescription is null
+--	begin
+--		raiserror('all parameters for proc are null or missing', 15,1);
+--	end
 
 	-- get the bank account id
-	SELECT AccountId 
-	into nBankAccountId
-		FROM BOOKS.Account 
-		WHERE BankAccountNumber = coalesce(sBankAccountNumber, BankAccountNumber) 
-			AND Description = coalesce(sBankAccountDescription, Description)
-			AND (sBankAccountNumber IS NOT NULL OR sBankAccountDescription IS NOT NULL);
---	IF BankAccountId IS null then 
---		RAISERROR('Unable to find BOOKS.Account entry for bank account %s, description %s', 15,1, @BankAccountNumber, @BankAccountDescription);
+	select accountid 
+	into nbankaccountid
+		from books.account 
+		where bankaccountnumber = coalesce(sbankaccountnumber, bankaccountnumber) 
+			and description = coalesce(sbankaccountdescription, description)
+			and (sbankaccountnumber is not null or sbankaccountdescription is not null);
+--	if bankaccountid is null then 
+--		raiserror('unable to find books.account entry for bank account %s, description %s', 15,1, @bankaccountnumber, @bankaccountdescription);
 --	end if;
 
-	select nextval('books.ImportSeq')
-	into nImportSeq;
+	select nextval('books.importseq')
+	into nimportseq;
 	
 	-- add to staging tables
-	INSERT into BOOKS.TransactionStaging (BankTransactionDate, BankProcessedDate, transactionxml, amount, ImportSeq, Type, Details, Particulars, Code, Reference)
-		SELECT
-			cast("Transaction Date" as date), 
-			cast ("Processed Date" as date),
+	insert into books.transactionstaging (banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference)
+		select
+			cast("transaction date" as date), 
+			cast ("processed date" as date),
 			'<xml>blah</xml>',
-			cast(A."Amount" as money),--BOOKS.CleanStringMoney(A.Amount),
-			nImportSeq,
-			"Type",
-			"Details",
-			"Particulars",
-			"Code",
-			"Reference"
-		FROM BOOKS.LoadImportFile A;
+			cast(a."amount" as money),--books.cleanstringmoney(a.amount),
+			nimportseq,
+			"type",
+			"details",
+			"particulars",
+			"code",
+			"reference"
+		from books.loadimportfile a;
 
-	INSERT into BOOKS.TransactionLineStaging (TransactionStagingId, AccountId, DepositAmount, WithdrawalAmount)
-		SELECT TransactionStagingId, 
-				CASE WHEN amount >= 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
-				abs("amount") AS DepositAmount,
-				0.0 AS WithdrawalAmount
-			FROM BOOKS.TransactionStaging 
-			WHERE ImportSeq = nImportSeq
-		UNION ALL
-		SELECT TransactionStagingId, 
-				CASE WHEN Amount < 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
-				0.0 AS DepositAmount,
-				abs(Amount) AS WithdrawalAmount
-			FROM BOOKS.TransactionStaging 
-			WHERE ImportSeq = nImportSeq
-			ORDER BY TransactionStagingId ASC;
+	insert into books.transactionlinestaging (transactionstagingid, accountid, depositamount, withdrawalamount)
+		select transactionstagingid, 
+				case when amount >= 0.0 then nbankaccountid else 0 end as accountid,
+				abs("amount") as depositamount,
+				0.0 as withdrawalamount
+			from books.transactionstaging 
+			where importseq = nimportseq
+		union all
+		select transactionstagingid, 
+				case when amount < 0.0 then nbankaccountid else 0 end as accountid,
+				0.0 as depositamount,
+				abs(amount) as withdrawalamount
+			from books.transactionstaging 
+			where importseq = nimportseq
+			order by transactionstagingid asc;
 --
---	IF bRemoveOverlappingTransactions == true
---	BEGIN
---		DECLARE @TransactionIdsToDelete TABLE (TransactionId BIGINT PRIMARY KEY CLUSTERED);
+--	if bremoveoverlappingtransactions == true
+--	begin
+--		declare @transactionidstodelete table (transactionid bigint primary key clustered);
 --
---		INSERT @TransactionIdsToDelete (TransactionId) 
---		SELECT DISTINCT t.TransactionId
---			FROM BOOKS.Transaction t
---				INNER JOIN BOOKS.TransactionLine tl ON t.TransactionId = tl.TransactionId
---				WHERE tl.AccountId = @BankAccountId AND t.BankTransactionDate 
---					IN (SELECT BankTransactionDate 
---							FROM BOOKS.TransactionStaging 
---							WHERE ImportUniqueIdentifier = @ImportUniqueIdentifier);
+--		insert @transactionidstodelete (transactionid) 
+--		select distinct t.transactionid
+--			from books.transaction t
+--				inner join books.transactionline tl on t.transactionid = tl.transactionid
+--				where tl.accountid = @bankaccountid and t.banktransactiondate 
+--					in (select banktransactiondate 
+--							from books.transactionstaging 
+--							where importuniqueidentifier = @importuniqueidentifier);
 --
---		DELETE BOOKS.TransactionLine WHERE TransactionId IN (SELECT TransactionId FROM @TransactionIdsToDelete);
---		DELETE BOOKS.Transaction WHERE TransactionId IN (SELECT TransactionId FROM @TransactionIdsToDelete);
---	END
---	ELSE
---	BEGIN
+--		delete books.transactionline where transactionid in (select transactionid from @transactionidstodelete);
+--		delete books.transaction where transactionid in (select transactionid from @transactionidstodelete);
+--	end
+--	else
+--	begin
 --		-- check staging tables (are we duplicating transactions, etc)
---		DECLARE @MAX_ALLOWABLE_DUPES INT = 0, @Dupes INT = 0;
+--		declare @max_allowable_dupes int = 0, @dupes int = 0;
 --
 --		
---		SELECT @Dupes = COUNT(*) FROM
+--		select @dupes = count(*) from
 --		(
---		SELECT ts.BankTransactionDate, ts.BankProcessedDate, tls.DepositAmount, tls.WithdrawalAmount, tls.AccountId
---			FROM BOOKS.TransactionStaging ts
---			INNER JOIN BOOKS.TransactionLineStaging tls ON ts.TransactionStagingId = tls.TransactionStagingId
---		INTERSECT 
---		SELECT t.BankTransactionDate, t.BankProcessedDate, tl.DepositAmount, tl.WithdrawalAmount, tl.AccountId
---			FROM BOOKS.Transaction t
---			INNER JOIN BOOKS.TransactionLine tl ON t.TransactionId = tl.TransactionId
+--		select ts.banktransactiondate, ts.bankprocesseddate, tls.depositamount, tls.withdrawalamount, tls.accountid
+--			from books.transactionstaging ts
+--			inner join books.transactionlinestaging tls on ts.transactionstagingid = tls.transactionstagingid
+--		intersect 
+--		select t.banktransactiondate, t.bankprocesseddate, tl.depositamount, tl.withdrawalamount, tl.accountid
+--			from books.transaction t
+--			inner join books.transactionline tl on t.transactionid = tl.transactionid
 --		) dupes
 --
---		IF @Dupes > @MAX_ALLOWABLE_DUPES
---		BEGIN
---			RAISERROR('Unable to import transactions because %i duplicates were found in BOOKS.TransactionLineStaging', 15, 1, @Dupes) WITH NOWAIT;
---			RETURN 1;
---		END
---	END
+--		if @dupes > @max_allowable_dupes
+--		begin
+--			raiserror('unable to import transactions because %i duplicates were found in books.transactionlinestaging', 15, 1, @dupes) with nowait;
+--			return 1;
+--		end
+--	end
 
-	-- Import into Transaction tables
-	INSERT into BOOKS.Transaction (BankTransactionDate, BankProcessedDate, TransactionXML, Amount, ImportSeq, Type, Details, Particulars, Code, Reference)
-	SELECT 
-		BankTransactionDate, 
-		BankProcessedDate,
-		TransactionXML,
-		Amount,
-		ImportSeq,
-		Type,
-		Details,
-		Particulars,
-		Code,
-		Reference
-		FROM BOOKS.TransactionStaging A;
+	-- import into transaction tables
+	insert into books.transaction (banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference)
+	select 
+		banktransactiondate, 
+		bankprocesseddate,
+		transactionxml,
+		amount,
+		importseq,
+		type,
+		details,
+		particulars,
+		code,
+		reference
+		from books.transactionstaging a;
 
-	INSERT into BOOKS.TransactionLine (TransactionId, AccountId, DepositAmount, WithdrawalAmount)
-		SELECT TransactionId, 
-			CASE WHEN Amount >= 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
-			ABS(Amount) AS DepositAmount,
-			0.0 AS WithdrawalAmount
-			FROM BOOKS.Transaction 
-			WHERE ImportSeq = nImportSeq
-		UNION ALL
-		SELECT TransactionId, 
-			CASE WHEN Amount < 0.0 THEN nBankAccountId ELSE 0 END AS AccountId,
-			0.0 AS DepositAmount,
-			ABS(Amount) AS WithdrawalAmount
-			FROM BOOKS.Transaction 
-			WHERE ImportSeq = nImportSeq
-			ORDER BY TransactionId ASC;
+	insert into books.transactionline (transactionid, accountid, depositamount, withdrawalamount)
+		select transactionid, 
+			case when amount >= 0.0 then nbankaccountid else 0 end as accountid,
+			abs(amount) as depositamount,
+			0.0 as withdrawalamount
+			from books.transaction 
+			where importseq = nimportseq
+		union all
+		select transactionid, 
+			case when amount < 0.0 then nbankaccountid else 0 end as accountid,
+			0.0 as depositamount,
+			abs(amount) as withdrawalamount
+			from books.transaction 
+			where importseq = nimportseq
+			order by transactionid asc;
 
 
-END;
-$$ LANGUAGE plpgsql;
+end;
+$$ language plpgsql;
