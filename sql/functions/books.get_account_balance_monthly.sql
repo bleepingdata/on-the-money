@@ -1,6 +1,4 @@
-USE OnTheMoney
-GO
-CREATE PROC BOOKS.GetAccountBalanceMonthly
+CREATE OR replace FUNCTION books.get_account_balance_monthly
 AS
 BEGIN
 
