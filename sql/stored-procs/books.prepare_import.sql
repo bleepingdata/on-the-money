@@ -1,6 +1,4 @@
-create
-or replace
-function BOOKS.PrepareForImportFile ( nBankAccountNumber varchar(56) = null, nBankAccountDescription varchar(50) = null ) returns void as $$ declare nBankAccountId int;
+create or replace function books.prepare_import ( nBankAccountNumber varchar(56) = null, nBankAccountDescription varchar(50) = null ) returns void as $$ declare nBankAccountId int;
 
  begin
 -- Process a bank file from ANZ. The file contents must already exist in BOOKS.LoadImportFile table. Parameters determine which account the

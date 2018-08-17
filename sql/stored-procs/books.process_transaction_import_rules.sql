@@ -1,5 +1,5 @@
 
-create or replace function books.processimportrules ()
+create or replace function books.process_transaction_import_rules ()
 RETURNS void AS $$
 begin
 	

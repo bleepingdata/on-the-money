@@ -1,4 +1,4 @@
-create or replace function books.processimportfile (sbankaccountnumber varchar(56) = null, 
+create or replace function books.import_file_anz_excel (sbankaccountnumber varchar(56) = null, 
 		sbankaccountdescription varchar(50) = null,
 		bremoveoverlappingtransactions boolean = false /* remove txs from same account for the same date(s) */
 		)
@@ -32,16 +32,16 @@ begin
 	-- add to staging tables
 	insert into books.transactionstaging (banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference)
 		select
-			cast("transaction date" as date), 
-			cast ("processed date" as date),
+			cast(a."Transaction Date" as date), 
+			cast (a."Processed Date" as date),
 			'<xml>blah</xml>',
-			cast(a."amount" as money),--books.cleanstringmoney(a.amount),
+			cast(a."Amount" as money),--books.cleanstringmoney(a.amount),
 			nimportseq,
-			"type",
-			"details",
-			"particulars",
-			"code",
-			"reference"
+			"Type",
+			"Details",
+			"Particulars",
+			"Code",
+			"Reference"
 		from books.loadimportfile a;
 
 	insert into books.transactionlinestaging (transactionstagingid, accountid, depositamount, withdrawalamount)

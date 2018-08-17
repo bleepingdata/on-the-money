@@ -51,7 +51,7 @@ conn = psycopg2.connect(database = s_databasename, user = s_username, password =
 cur = conn.cursor()
 
 # Get ready for import (truncate load tables, etc)
-cur.execute("select BOOKS.PrepareForImportFile (NULL,'Current Account');")
+cur.execute("select books.prepare_import (NULL,'Current Account');")
 conn.commit
 conn.close()
 print ("Committed and closed")
@@ -85,7 +85,7 @@ print ("Complete")
 print ("Connecting to DB for processing")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
 cur = conn.cursor()
-cur.execute("select books.ProcessImportFile (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
+cur.execute("select books.import_file_anz_excel (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
 conn.commit
 conn.close()
 print ("Committed and closed")
