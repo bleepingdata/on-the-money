@@ -1,6 +1,4 @@
-USE OnTheMoney
-GO
-CREATE PROC BOOKS.GetAccountMovementMonthly
+CREATE OR replace function get_account_movement_monthly
 AS
 BEGIN
 

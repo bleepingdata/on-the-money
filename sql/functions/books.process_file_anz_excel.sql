@@ -1,4 +1,6 @@
-create or replace function books.import_file_anz_excel (sbankaccountnumber varchar(56) = null, 
+drop function if exists books.process_file_anz_excel;
+
+create or replace function books.process_file_anz_excel (sbankaccountnumber varchar(56) = null, 
 		sbankaccountdescription varchar(50) = null,
 		bremoveoverlappingtransactions boolean = false /* remove txs from same account for the same date(s) */
 		)

@@ -1,6 +1,6 @@
 USE OnTheMoney
 GO
-CREATE PROC BOOKS.GetAccountMovementBetweenDates @AccountId INT, @StartDate DATE, @EndDate DATE
+CREATE OR replace function books.get_account_movement_between_dates @AccountId INT, @StartDate DATE, @EndDate DATE
 AS
 BEGIN
 /* 

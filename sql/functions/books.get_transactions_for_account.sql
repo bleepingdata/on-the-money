@@ -1,6 +1,4 @@
-USE OnTheMoney
-GO
-CREATE PROC BOOKS.GetTransactionsForAccount @AccountId INT
+CREATE OR replace FUNCTION books.get_transactions_for_account  @AccountId INT
 AS
 BEGIN
 /* 
