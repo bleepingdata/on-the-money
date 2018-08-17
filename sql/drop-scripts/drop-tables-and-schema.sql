@@ -8,3 +8,6 @@ drop table BOOKS.TransactionImportRules;
 DROP TABLE BOOKS.Account;
 DROP TABLE BOOKS.AccountType;
 DROP SCHEMA BOOKS;
+
+drop table fact.account_summary_by_month;
+drop schema fact;
