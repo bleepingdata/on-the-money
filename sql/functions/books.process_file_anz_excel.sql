@@ -21,8 +21,8 @@ begin
 	select accountid 
 	into nbankaccountid
 		from books.account 
-		where bankaccountnumber = coalesce(sbankaccountnumber, bankaccountnumber) 
-			and description = coalesce(sbankaccountdescription, description)
+		where (bankaccountnumber = coalesce(sbankaccountnumber, bankaccountnumber) 
+			or description = coalesce(sbankaccountdescription, description))
 			and (sbankaccountnumber is not null or sbankaccountdescription is not null);
 --	if bankaccountid is null then 
 --		raiserror('unable to find books.account entry for bank account %s, description %s', 15,1, @bankaccountnumber, @bankaccountdescription);

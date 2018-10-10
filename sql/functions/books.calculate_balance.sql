@@ -1,4 +1,4 @@
-drop function if exists books.calculate_balancel;
+drop function if exists books.calculate_balance;
 
 create or replace function books.calculate_balance (n_accountid int)
 returns table (accountid_ret int, deposit_amount_total_ret numeric (16,2), withdrawal_amount_total_ret numeric(16,2)) as $$
