@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, 
 
 import argparse
 from argparse import ArgumentParser
-import os.path
+#import os.path
 
 
 print ("File Import started")
@@ -85,7 +85,7 @@ print ("Complete")
 print ("Connecting to DB for processing")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
 cur = conn.cursor()
-cur.execute("select books.import_file_anz_excel (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
+cur.execute("select books.process_file_anz_excel (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
 conn.commit
 conn.close()
 print ("Committed and closed")
