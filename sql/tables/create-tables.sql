@@ -129,7 +129,6 @@ code varchar(50) null,
 reference varchar(50) null
 );
  
-create schema fact;
 
 create table fact.account_summary_by_month
 (
