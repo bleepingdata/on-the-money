@@ -3,8 +3,10 @@ drop
 
  create
 or replace
-function fact.populate_account_summary_by_month() returns void as $$ begin truncate
-	table
+function fact.populate_account_summary_by_month() returns void as $$ 
+begin 
+	
+	truncate table
 		fact.account_summary_by_month;
 
  insert
