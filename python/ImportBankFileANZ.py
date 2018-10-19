@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, 
 
 import argparse
 from argparse import ArgumentParser
-import os.path
+#import os.path
 
 
 print ("File Import started")
