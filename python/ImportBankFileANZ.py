@@ -83,7 +83,7 @@ print ("Complete")
 
 # Process the file
 print ("Connecting to DB for processing")
-conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = "localhost", port = "5432")
+conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 cur = conn.cursor()
 cur.execute("select books.process_file_anz_excel (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
 conn.commit
