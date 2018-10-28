@@ -51,7 +51,7 @@ conn = psycopg2.connect(database = s_databasename, user = s_username, password =
 cur = conn.cursor()
 
 # Get ready for import (truncate load tables, etc)
-cur.execute("select books.prepare_import (NULL,'Current Account');")
+cur.execute("select books.prepare_import (%s, %s);", (s_bankaccountnumber, s_bankaccountdescription))
 conn.commit
 conn.close()
 print ("Committed and closed")

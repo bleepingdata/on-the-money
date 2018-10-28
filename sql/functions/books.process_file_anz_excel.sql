@@ -24,9 +24,11 @@ begin
 		where (bankaccountnumber = coalesce(sbankaccountnumber, bankaccountnumber) 
 			or description = coalesce(sbankaccountdescription, description))
 			and (sbankaccountnumber is not null or sbankaccountdescription is not null);
---	if bankaccountid is null then 
---		raiserror('unable to find books.account entry for bank account %s, description %s', 15,1, @bankaccountnumber, @bankaccountdescription);
---	end if;
+
+	if nbankaccountid is null then 
+	RAISE EXCEPTION 'Nonexistent sbankaccountnumber or sbankaccountdescription --> %, %', sbankaccountnumber, sbankaccountdescription
+      USING HINT = 'Please check incoming parameters for sbankaccountnumber and sbankaccountdescription';
+	end if;
 
 	select nextval('books.importseq')
 	into nimportseq;
