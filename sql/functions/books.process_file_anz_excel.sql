@@ -22,7 +22,7 @@ begin
 	into nbankaccountid
 		from books.account 
 		where (bankaccountnumber = coalesce(sbankaccountnumber, bankaccountnumber) 
-			or description = coalesce(sbankaccountdescription, description))
+			and description = coalesce(sbankaccountdescription, description))
 			and (sbankaccountnumber is not null or sbankaccountdescription is not null);
 
 	if nbankaccountid is null then 
