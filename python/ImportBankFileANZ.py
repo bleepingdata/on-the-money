@@ -52,7 +52,7 @@ cur = conn.cursor()
 
 # Get ready for import (truncate load tables, etc)
 cur.execute("select books.prepare_import (%s, %s);", (s_bankaccountnumber, s_bankaccountdescription))
-conn.commit
+conn.commit()
 conn.close()
 print ("Committed and closed")
 
@@ -75,18 +75,18 @@ xl = pd.ExcelFile(s_bankexcelfile)
 dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
 print ("Complete")
 
-# Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
+# # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
 
 print ("Inserting data frame into load table")
 dfTransactions.to_sql(name='loadimportfile', if_exists='append',con=engine, schema='books', index=False, chunksize=1)
 print ("Complete")
 
-# Process the file
+# # Process the file
 print ("Connecting to DB for processing")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 cur = conn.cursor()
 cur.execute("select books.process_file_anz_excel (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
-conn.commit
+conn.commit()
 conn.close()
 print ("Committed and closed")
 
