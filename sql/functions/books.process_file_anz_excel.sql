@@ -41,7 +41,8 @@ end if;
 -- add to staging tables
  insert
 	into
-		books.transactionstaging ( banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference ) select
+		books.transactionstaging ( sourceaccountid, banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference ) select
+			nbankaccountid,
 			cast( a."Transaction Date" as date ),
 			cast ( a."Processed Date" as date ),
 			'<xml>blah</xml>',
@@ -91,7 +92,8 @@ from
 		using books.transactionstaging ts,
 	books.transaction t
 where
-	t.transactionid = tl.transactionid
+	t.sourceaccountid=nbankaccountid
+	and t.transactionid = tl.transactionid
 	and ts.banktransactiondate = t.banktransactiondate
 	and ts.amount = t.amount
 	and coalesce( ts.code, '' ) = coalesce( t.code, '' )
@@ -105,7 +107,8 @@ from
 	books.transaction t
 		using books.transactionstaging ts
 where
-	ts.banktransactiondate = t.banktransactiondate
+	t.sourceaccountid=nbankaccountid
+	and ts.banktransactiondate = t.banktransactiondate
 	and ts.amount = t.amount
 	and coalesce( ts.code, '' ) = coalesce( t.code, '' )
 	and coalesce( ts.details, '' ) = coalesce( t.details, '' )
@@ -117,7 +120,8 @@ end if;
 -- import into transaction tables
  insert
 	into
-		books.transaction ( banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference ) select
+		books.transaction ( sourceaccountid, banktransactiondate, bankprocesseddate, transactionxml, amount, importseq, type, details, particulars, code, reference ) select
+			nbankaccountid,
 			banktransactiondate,
 			bankprocesseddate,
 			transactionxml,
