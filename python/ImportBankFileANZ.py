@@ -73,6 +73,9 @@ engine = create_engine(s_alchemy_connection)
 print ("Loading Excel into data frame")
 xl = pd.ExcelFile(s_bankexcelfile)
 dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
+dfTransactions['bankaccountnumber'] = s_bankaccountnumber
+dfTransactions['bankaccountdescription'] = s_bankaccountdescription
+
 print ("Complete")
 
 # # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
