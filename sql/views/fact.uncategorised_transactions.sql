@@ -1,7 +1,8 @@
 create or replace view fact.uncategorised_transactions
 AS
-select ?
-from fact.account_summary_by_month asm
-	inner join books.account a on asm.accountid = a.accountid
-	inner join books.accounttype a_t on a.accounttypeid = a_t.accounttypeid
-order by asm.accountid, asm.year, asm.month;
+select t.transactionid, a_source.description as source_account, tl.depositamount, tl.withdrawalamount, t.banktransactiondate, t.bankprocesseddate, t."type", reference, t.code, t.particulars, t.details
+from books."transaction" t 
+	inner join books.transactionline tl on t.transactionid = tl.transactionid
+	inner join books.account a_source on t.sourceaccountid = a_source.accountid
+where t.sourceaccountid <> tl.accountid
+and tl.accountid=0;
