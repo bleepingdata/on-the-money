@@ -25,7 +25,7 @@ begin
 		where tl.accountid = n_accountid
 		and coalesce(t.bankprocesseddate, '2100-01-01') >= a.openingbalancedate;
 	
-	update books.account set balance = openingbalance + (coalesce(d_deposit_amount_total,0) - coalesce(d_withdrawal_amount_total,0)) 
+	update books.account set balance =  (coalesce(d_deposit_amount_total,0) - coalesce(d_withdrawal_amount_total,0)) 
 			where accountid = n_accountid;
 
 	return query select n_accountid, coalesce(d_deposit_amount_total,0), coalesce(d_withdrawal_amount_total,0);

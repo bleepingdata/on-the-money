@@ -24,21 +24,6 @@ begin
 			sum ( transactions.deposit_amount - transactions.withdrawal_amount) over ( partition by transactions.accountid order by transactions.year, transactions.month) as balance
 		from
 			( select
-				accountid, 
-				date_part( 'year', a.openingbalancedate ) as year, 
-				date_part( 'month', a.openingbalancedate ) as month, 
-				date_trunc( 'month', a.openingbalancedate ) + interval '1 month' - interval '1 day' as month_as_date, 
-				cast (case
-					when a.openingbalance < 0.0 then 0
-					else a.openingbalance
-				end as numeric( 16, 2 )) as deposit_amount, 
-				cast (case
-					when a.openingbalance >= 0.0 then 0
-					else a.openingbalance
-				end as numeric( 16, 2 )) as withdrawal_amount
-			from
-				books.account a
-		union all select
 				tl.accountid, 
 				date_part( 'year', t.banktransactiondate ) as year, 
 				date_part( 'month', t.banktransactiondate ) as month, 
