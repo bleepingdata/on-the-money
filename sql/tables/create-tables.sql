@@ -44,7 +44,7 @@ bankaccountdescription varchar(50) NULL,
 "Balance" varchar(50) null,
 "To/From Account Number" varchar(50) null,
 "Conversion Charge" varchar(50) null,
-"Foreign Currency Amount" varchar(50) null
+"Foreign Currency Amount" varchar(100) null
 );
 
 create table books.loadimportfile_excel_anzmortgage
