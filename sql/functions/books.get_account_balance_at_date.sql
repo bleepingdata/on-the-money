@@ -9,9 +9,6 @@ begin
  get the balance for an account at a date, taking the opening balance into account
  */
 
-       select openingbalance into n_opening_balance
-       from books.account where accountid = n_accountid;
-
 		select sum(depositamount) 
 		into n_deposit_amount_total
 							from books.transaction t
@@ -32,8 +29,7 @@ begin
 
 
 return query
-select n_accountid, d_date, (n_opening_balance) + (n_deposit_amount_total - n_withdrawal_amount_total) as balance;
---into ret_accountid, ret_date, ret_balance;
+select n_accountid, d_date, (n_deposit_amount_total - n_withdrawal_amount_total) as balance;
 
 end;
 $$ language plpgsql;
