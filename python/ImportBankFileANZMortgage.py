@@ -39,7 +39,7 @@ s_bankaccountdescription = args.bankaccountdescription
 b_removeoverlappingtransactions = True
 
  
-print ("File is %s" %(s_bankexcelfile))
+print ("File is %s" %(s_anzexcelmortgagefile))
 
  # Connect to DB
 print ("Connecting to DB for Prepare")
@@ -53,27 +53,41 @@ conn.commit()
 conn.close()
 print ("Committed and closed")
 
+# Check file exists
+try:
+    with open(args.anzexcelmortgagefile) as file:
+        pass
+except IOError as e:
+    print("Unable to open file") #Does not exist OR no read permissions
+    raise
 
-# # Create the SQL connection object
-# pyodbc_connection='mssql+pyodbc://{}:{}@{}'.format(username, password, datasourcename)
-# engine = create_engine(pyodbc_connection) 
 
-# # Grab a pyodbc cursor to use for calling stored procs
-# cursor = engine.raw_connection().cursor()
+# Create the SQLconnection object (postgresql://username:password@host:port/database)
+s_alchemy_connection = "postgresql://{}:{}@localhost:5432/{}".format(s_username, s_password, s_databasename)
+engine = create_engine(s_alchemy_connection)
 
-# # Prepare for the import (this truncates a table and checks if accounts exists)
-# cursor.execute("BOOKS.PrepareForImportFile ?, ?", [bankaccountnumber, bankaccountdescription])
-# cursor.commit()
+# Load spreadsheet
+print ("Loading Excel into data frame")
+xl = pd.ExcelFile(s_anzexcelmortgagefile)
+dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
+dfTransactions['bankaccountnumber'] = s_bankaccountnumber
+dfTransactions['bankaccountdescription'] = s_bankaccountdescription
 
-# # Load spreadsheet
-# xl = pd.ExcelFile(bankexcelfile)
+print ("Complete")
 
 # # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
-# dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
-# dfTransactions.to_sql(name='LoadImportFile_Excel_ANZMortgage', if_exists='append',con=engine, schema='BOOKS', index=False, chunksize=1)
+
+print ("Inserting data frame into load table")
+dfTransactions.to_sql(name='loadimportfile_excel_anzmortgage', if_exists='append',con=engine, schema='books', index=False, chunksize=1)
+print ("Complete")
 
 # # Process the file
-# cursor.execute("BOOKS.ProcessImportFile_Excel_ANZMortgage ?, ?, ?", [bankaccountnumber, bankaccountdescription, removeoverlappingtransactions])
-# cursor.commit()
+print ("Connecting to DB for processing")
+conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
+cur = conn.cursor()
+cur.execute("select books.processimportfile_excel_anzmortgage (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
+conn.commit()
+conn.close()
+print ("Committed and closed")
 
-
+print ("File Import complete")
