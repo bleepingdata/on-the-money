@@ -150,3 +150,22 @@ balance numeric(16,2)
 );
 
 
+create table dimension.dates
+(
+datekey date not null unique,
+year int not null,
+month_number int not null,
+month_text varchar(10) not null,
+month_year_text varchar(12) not null,
+month_year_date date not null
+);
+
+insert into dimension.dates(datekey, year, month_number, month_text, month_year_text, month_year_date)
+SELECT d.date, 
+date_part('year', d.date), 
+date_part('month', d.date), 
+to_char(d.date, 'Mon'), 
+to_char(d.date, 'Mon YYYY'),
+(date_trunc('MONTH', d.date) + INTERVAL '1 MONTH - 1 day')::date
+FROM GENERATE_SERIES('2016-01-01', '2050-01-01', '1 day'::INTERVAL) d
+;
