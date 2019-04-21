@@ -1,2 +1,3 @@
 CREATE SCHEMA BOOKS;
 CREATE SCHEMA FACT;
+create schema dimension;
