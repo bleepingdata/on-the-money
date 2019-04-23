@@ -81,7 +81,7 @@ print ("Complete")
 # # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
 
 print ("Inserting data frame into load table")
-dfTransactions.to_sql(name='loadimportfile', if_exists='append',con=engine, schema='books', index=False, chunksize=1)
+dfTransactions.to_sql(name='anz_export_file', if_exists='append',con=engine, schema='load', index=False, chunksize=1)
 print ("Complete")
 
 # # Process the file
