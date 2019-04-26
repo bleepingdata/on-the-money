@@ -1,40 +1,21 @@
-create or replace function books.insert_gl_entry_basic (n_gl_type_id int2, s_debit_account varchar(50),
+drop function if exists books.insert_gl_entry_basic;
+
+create or replace function books.insert_gl_entry_basic (n_gl_type_id int2, 
+n_debit_account_id int,
 n_debit_amount numeric(16,2),
-s_credit_account varchar(50),
+n_credit_account_id int,
 n_credit_amount numeric(16,2),
 d_gl_date date,
 s_memo varchar(256),
 n_source_identifier int8) 
 returns int as $$ 
-declare n_debit_account_id int;
-n_credit_account_id int;
-n_gl_grouping_id int8;
+declare n_gl_grouping_id int8;
 begin
 
 	select
 	nextval('books.gl_grouping_seq') into
 		n_gl_grouping_id;
 
-	select
-	accountid into
-		n_debit_account_id
-	from
-		books.account
-	where
-		description = s_debit_account;
-
-	select
-	accountid into
-		n_credit_account_id
-	from
-		books.account
-	where
-		description = s_credit_account;
-
-	if n_debit_account_id is null or n_credit_account_id is null 
-		then raise exception 'unable to insert journal entry because either fromaccount %s or toaccount %s cannot be found',s_from_account,s_to_account;
-		return 0;
-	end if;
 
 	insert
 	into

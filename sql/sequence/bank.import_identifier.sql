@@ -1,4 +1,4 @@
-CREATE SEQUENCE BOOKS.ImportSeq
+CREATE sequence bank.import_identifier
   START WITH 1
   INCREMENT BY 1
   MINVALUE 1
