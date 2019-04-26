@@ -1,3 +1,5 @@
+drop function if exists books.insert_journal_entry_basic;
+
 create or replace function books.insert_journal_entry_basic (
 s_debit_account varchar(50),
 n_debit_amount numeric(16,2),

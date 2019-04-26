@@ -1,36 +1,50 @@
+drop function if exists books.insert_gl_entry_from_bank_transaction;
+
 create or replace function books.insert_gl_entry_from_bank_transaction (
-n_bank_transaction_id int4 
+n_transaction_id int8 
 )
 returns int as $$
-declare s_debit_account_id int;
-s_debit_amount numeric(16,2);
-s_credit_account_id varchar(50);
-s_credit_amount numeric(16,2);
+declare n_debit_account_id int;
+n_debit_amount numeric(16,2);
+n_credit_account_id int;
+n_credit_amount numeric(16,2);
 d_gl_date date;
 s_memo varchar(256);
+n_source_identifier int8;
+n_uncategorised_income_account_id int;
+n_uncategorised_expense_account_id int;
 begin
 
-
-	select s_debit_account_id = case when t.amount < 0 then a.account_id else 0 end,
-	  s_debit_amount = case when t.amount < 0 then t.amount else 0 end,
-	  s_credit_account_id = case when t.amount >= 0 then a.account_id else 0 end,
-	  s_credit_amount = case when t.amount >=0 then t.amount else 0 end,
-	  d_gl_date = bank_transaction_date,
-	  s_memo = 'imported'
-	from books.bank_transaction t
+	select into n_uncategorised_income_account_id
+		a.account_id
+		from books.account a where description ='uncategorised income';
+	
+	select into n_uncategorised_expense_account_id
+		a.account_id
+		from books.account a where description ='uncategorised expense';
+	
+	select into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
+		s_memo
+		case when t.amount > 0 then a.account_id else n_uncategorised_expense_account_id end,
+		ABS(t.amount),
+		case when t.amount > 0 then n_uncategorised_income_account_id else a.account_id end,
+		ABS(t.amount),
+		t.transaction_date,
+		'imported'
+	from bank.transaction t
 		inner join books.account a on 
 			(t.bank_account_friendly_name = a.external_friendly_name
-			  and t.bank_account_number = a.external_unique_number)
-	where bank_transaction_id = n_bank_transaction_id;
+			  or t.bank_account_number = a.external_unique_identifier)
+	where t.transaction_id = n_transaction_id;
 
 	perform books.insert_gl_entry_basic(1::int2, -- JE 
-		s_debit_account::varchar, 
+		n_debit_account_id::int, 
 		n_debit_amount::numeric(16,2), 
-		s_credit_account::varchar, 
+		n_credit_account_id::int, 
 		n_credit_amount::numeric(16,2), 
 		d_gl_date::date, 
 		s_memo::varchar,
-		null::int4);
+		n_transaction_id::int8);
 	
 	return 1;
 end;
