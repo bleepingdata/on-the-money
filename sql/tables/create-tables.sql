@@ -149,17 +149,17 @@ code varchar(50) null,
 reference varchar(50) null
 );
  
-
+-- drop table fact.account_summary_by_month
 create table fact.account_summary_by_month
 (
-accountid int not null,
+account_id int not null,
 year int not null,
-month int not null,
-month_as_date date not null,
-deposit_amount numeric(16,2),
-withdrawal_amount numeric(16,2),
-deposit_amount_running_total numeric(16,2),
-withdrawal_amount_running_total numeric(16,2),
+month_number int not null,
+month_end_date date not null,
+debit_amount numeric(16,2),
+credit_amount numeric(16,2),
+debit_amount_running_total numeric(16,2),
+credit_amount_running_total numeric(16,2),
 balance numeric(16,2)
 );
 

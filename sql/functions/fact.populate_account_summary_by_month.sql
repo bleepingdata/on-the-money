@@ -8,73 +8,72 @@ begin
 	
 	truncate table
 		fact.account_summary_by_month;
-with monthly_txn as 
+	
+with monthly_summary as 
 (
  select
-	tl.accountid,
-	t.banktransactiondate,
-	tl.depositamount,
-	tl.withdrawalamount
+	gl.account_id,
+	gl.gl_date,
+	gl.debit_amount,
+	gl.credit_amount
 from
-	books.transaction t
-inner join books.transactionline tl on
-	t.transactionid = tl.transactionid
+	books.general_ledger gl
 union all select
-	a.accountid,
-	d.month_year_date as banktransactiondate,
-	0 as depositamount,
-	0 as withdrawalamount
+	a.account_id,
+	d.month_year_date as gl_date,
+	0 as debit_amount,
+	0 as credit_amount
 from
 	dimension.dates d
 inner join books.account a on
-	d.datekey >= a.openingbalancedate
-left join books.transaction t on
-	d.datekey = t.banktransactiondate
-	and a.accountid = t.sourceaccountid
+	d.datekey >= a.open_date
+left join books.general_ledger gl on
+	d.datekey = gl.gl_date
+	and a.account_id = gl.account_id
 where
-	t.sourceaccountid is null
+	gl.account_id is null
 	and d.datekey >= (
 	select
-		min(banktransactiondate)
+		min(gl_date)
 	from
-		books."transaction")
+		books.general_ledger)
 	and d.month_year_date <= (
 	select
-		max(banktransactiondate)
+		max(gl_date)
 	from
-		books."transaction")
-group by a.accountid, d.month_year_date
+		books.general_ledger)
+group by a.account_id, d.month_year_date
 )
  insert
 	into
-		fact.account_summary_by_month ( accountid, year, month, month_as_date, deposit_amount, withdrawal_amount, deposit_amount_running_total, withdrawal_amount_running_total, balance ) 
+		fact.account_summary_by_month ( account_id, year, month_number, month_end_date, debit_amount, credit_amount, debit_amount_running_total, credit_amount_running_total, balance ) 
 		select
-			transactions.accountid,
+			transactions.account_id,
 			transactions.year,
-			transactions.month,
-			transactions.month_as_date,
-			transactions.deposit_amount,
-			transactions.withdrawal_amount,
-			sum ( transactions.deposit_amount ) over ( partition by transactions.accountid order by transactions.year, transactions.month) as deposit_amount_running_total,
-			sum ( transactions.withdrawal_amount ) over ( partition by transactions.accountid order by transactions.year, transactions.month) as withdrawal_amount_running_total,
-			sum ( transactions.deposit_amount - transactions.withdrawal_amount) over ( partition by transactions.accountid order by transactions.year, transactions.month) as balance
+			transactions.month_number,
+			transactions.month_end_date,
+			transactions.debit_amount,
+			transactions.credit_amount,
+			sum ( transactions.debit_amount ) over ( partition by transactions.account_id order by transactions.year, transactions.month_number) as debit_amount_running_total,
+			sum ( transactions.credit_amount ) over ( partition by transactions.account_id order by transactions.year, transactions.month_number) as credit_amount_running_total,
+			sum ( transactions.debit_amount - transactions.credit_amount) over ( partition by transactions.account_id order by transactions.year, transactions.month_number) as balance
 		from
 			( select
-				accountid, 
-				date_part( 'year', banktransactiondate ) as year, 
-				date_part( 'month', banktransactiondate ) as month, 
-				date_trunc( 'month', max( banktransactiondate )) + interval '1 month' - interval '1 day' as month_as_date, 
-				sum(depositamount) as deposit_amount, 
-				sum(withdrawalamount) as withdrawal_amount
+				account_id, 
+				date_part( 'year', gl_date ) as year, 
+				date_part( 'month', gl_date ) as month_number, 
+				date_trunc( 'month', max( gl_date )) + interval '1 month' - interval '1 day' as month_end_date, 
+				sum(debit_amount) as debit_amount, 
+				sum(credit_amount) as credit_amount
 			from
-				monthly_txn
+				monthly_summary
 			group by
-				accountid, date_part( 'year', banktransactiondate ), date_part( 'month', banktransactiondate ) 
+				account_id, date_part( 'year', gl_date ), date_part( 'month', gl_date ) 
 				) transactions
 		order by
-			transactions.accountid,
-			year,
-			month;
+			transactions.account_id,
+			transactions.year,
+			transactions.month_number;
 
  return;
 
