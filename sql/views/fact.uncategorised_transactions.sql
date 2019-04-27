@@ -1,8 +1,9 @@
+drop view if exists fact.uncategorised_transactions;
+
 create or replace view fact.uncategorised_transactions
 AS
-select t.transactionid, a_source.description as source_account, tl.depositamount, tl.withdrawalamount, t.banktransactiondate, t.bankprocesseddate, t."type", reference, t.code, t.particulars, t.details
-from books."transaction" t 
-	inner join books.transactionline tl on t.transactionid = tl.transactionid
-	inner join books.account a_source on t.sourceaccountid = a_source.accountid
-where t.sourceaccountid <> tl.accountid
-and tl.accountid=0;
+select gl.gl_id, gl.account_id, gl.debit_amount, gl.credit_amount, t.transaction_date, t.processed_date, t."type", t.other_party_bank_account_number, reference, t.code, t.particulars, t.details
+from books.general_ledger gl
+	left join bank."transaction" t on gl.source_identifier = t.transaction_id
+where gl.account_id in (select account_id from books.account where description in ('uncategorised income', 'uncategorised expense'))
+;
