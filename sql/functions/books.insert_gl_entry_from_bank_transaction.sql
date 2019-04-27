@@ -29,7 +29,7 @@ begin
 		ABS(t.amount),
 		case when t.amount > 0 then n_uncategorised_income_account_id else a.account_id end,
 		ABS(t.amount),
-		t.transaction_date,
+		t.processed_date,
 		'imported'
 	from bank.transaction t
 		inner join books.account a on 
