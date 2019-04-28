@@ -5,7 +5,7 @@ AS
 select t.transaction_id, 
 	t.bank_account_friendly_name,
 	t.bank_account_number,
-	t.account_id,
+	t.bank_account_id,
 	t.amount,
 	t.balance,
 	t.transaction_date, 
