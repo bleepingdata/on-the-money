@@ -25,9 +25,16 @@ begin
 	
 	select into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
 		s_memo
-		case when t.amount > 0 then a.account_id else n_uncategorised_expense_account_id end,
+		case when t.amount > 0 
+			then a.account_id 
+			else 
+				case when other_party_account_id is null then n_uncategorised_expense_account_id else other_party_account_id end 
+			end,
 		ABS(t.amount),
-		case when t.amount > 0 then n_uncategorised_income_account_id else a.account_id end,
+		case when t.amount > 0 
+			then case when other_party_account_id is null then n_uncategorised_income_account_id else other_party_account_id end
+			else a.account_id 
+			end,
 		ABS(t.amount),
 		t.processed_date,
 		'imported'
