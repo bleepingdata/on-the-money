@@ -66,7 +66,7 @@ except IOError as e:
 
 
 # Create the SQLconnection object (postgresql://username:password@host:port/database)
-s_alchemy_connection = "postgresql://{}:{}@localhost:5432/{}".format(s_username, s_password, s_databasename)
+s_alchemy_connection = "postgresql://{}:{}@{}:{}/{}".format(s_username, s_password, s_host, n_port, s_databasename)
 engine = create_engine(s_alchemy_connection)
 
 # Load spreadsheet
