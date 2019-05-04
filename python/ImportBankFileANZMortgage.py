@@ -5,10 +5,14 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, 
 
 import argparse
 from argparse import ArgumentParser
+#import os.path
+
+
+print ("File Import started")
 
 parser = ArgumentParser()
-parser.add_argument("-f", "--file", dest="anzexcelmortgagefile", required=True,
-                    help="the file name of the ANZ excel mortgage file to import", metavar="FILE")
+parser.add_argument("-f", "--file", dest="input_file", required=True,
+                    help="the file name and path that to import", metavar="FILE")
 parser.add_argument("-db", "--databasename", dest="databasename", required=True,
                     help="data source name of the database server")
 parser.add_argument("-u", "--username", dest="username", required=True,
@@ -28,18 +32,17 @@ args = parser.parse_args()
 
 
 # Set parameter-related variables
-s_anzexcelmortgagefile = args.anzexcelmortgagefile
+s_input_file = args.input_file
 s_databasename = args.databasename
 s_username = args.username
 s_password = args.password
 s_host = args.host
 n_port = args.port
-s_bankaccountnumber = args.bankaccountnumber
-s_bankaccountdescription = args.bankaccountdescription
+s_bank_account_number = args.bankaccountnumber
+s_bank_account_friendly_name = args.bankaccountdescription
 b_removeoverlappingtransactions = True
-
  
-print ("File is %s" %(s_anzexcelmortgagefile))
+print ("File is %s" %(s_input_file))
 
  # Connect to DB
 print ("Connecting to DB for Prepare")
@@ -48,14 +51,14 @@ conn = psycopg2.connect(database = s_databasename, user = s_username, password =
 cur = conn.cursor()
 
 # Get ready for import (truncate load tables, etc)
-cur.execute("select books.prepare_import (%s, %s);", (s_bankaccountnumber, s_bankaccountdescription))
+cur.execute("select load.prepare_anz_mortgage_excel();")
 conn.commit()
 conn.close()
 print ("Committed and closed")
 
 # Check file exists
 try:
-    with open(args.anzexcelmortgagefile) as file:
+    with open(args.input_file) as file:
         pass
 except IOError as e:
     print("Unable to open file") #Does not exist OR no read permissions
@@ -63,30 +66,40 @@ except IOError as e:
 
 
 # Create the SQLconnection object (postgresql://username:password@host:port/database)
-s_alchemy_connection = "postgresql://{}:{}@localhost:5432/{}".format(s_username, s_password, s_databasename)
+s_alchemy_connection = "postgresql://{}:{}@{}:{}/{}".format(s_username, s_password, s_host, n_port, s_databasename)
 engine = create_engine(s_alchemy_connection)
 
 # Load spreadsheet
 print ("Loading Excel into data frame")
-xl = pd.ExcelFile(s_anzexcelmortgagefile)
+xl = pd.ExcelFile(s_input_file)
 dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
-dfTransactions['bankaccountnumber'] = s_bankaccountnumber
-dfTransactions['bankaccountdescription'] = s_bankaccountdescription
+dfTransactions['bank_account_number'] = s_bank_account_number
+dfTransactions['bank_account_friendly_name'] = s_bank_account_friendly_name
 
 print ("Complete")
 
 # # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
 
 print ("Inserting data frame into load table")
-dfTransactions.to_sql(name='loadimportfile_excel_anzmortgage', if_exists='append',con=engine, schema='books', index=False, chunksize=1)
+dfTransactions.to_sql(name='anz_mortgage_excel', if_exists='append',con=engine, schema='load', index=False, chunksize=1)
 print ("Complete")
 
 # # Process the file
 print ("Connecting to DB for processing")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 cur = conn.cursor()
-cur.execute("select books.processimportfile_excel_anzmortgage (%s, %s, %s)", (s_bankaccountnumber, s_bankaccountdescription, b_removeoverlappingtransactions))
+cur.execute("select bank.insert_bank_transaction_from_anz_mortgage_excel (%s, %s)", (s_bank_account_number, s_bank_account_friendly_name))
+row = cur.fetchone()
+n_import_identifier=row[0]
+
+cur.execute("select bank.process_import_rules ()")
+
+cur.execute("select books.insert_gl_from_bank_import (%s)", (n_import_identifier,))
+
+# close the communication with the PostgreSQL database server
+cur.close()
 conn.commit()
+
 conn.close()
 print ("Committed and closed")
 
