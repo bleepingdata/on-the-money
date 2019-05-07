@@ -9,3 +9,7 @@ Developing using Visual Studio Code and DBeaver on macOS 10.13 / Win 10 using Py
 
 The project is pre-alpha.
 
+Future plans for API: use Flask to wrap Python scripts in Restful API
+
+Future plans for UI: not known
+
