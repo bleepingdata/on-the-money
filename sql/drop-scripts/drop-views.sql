@@ -6,3 +6,5 @@ drop view fact.account_balance;
 drop view fact.account_movement;
 drop view fact.transaction;
 drop view fact.uncategorised_transactions;
+drop view fact.gl_entries;
+drop view fact.bank_transfers;
