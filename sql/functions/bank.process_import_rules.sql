@@ -16,10 +16,27 @@ begin
 		where 
 			(t.type = ir.type or ir.type is null)
 			and (t.other_party_bank_account_number = ir.other_party_bank_account_number or ir.other_party_bank_account_number is null)
-			and (t.details LIKE ir.details or ir.details is null)
-			and (t.particulars LIKE ir.particulars or ir.particulars is null)
-			and (t.code LIKE ir.code or ir.code is null)
-			and (t.reference LIKE ir.reference or ir.reference is null)
+			and (
+			
+					(
+						(t.details is not null or t.particulars is not null or t.code is not null or t.reference is not null)
+						and (t.details LIKE ir.details or ir.details is null)
+						and (t.particulars LIKE ir.particulars or ir.particulars is null)
+						and (t.code LIKE ir.code or ir.code is null)
+						and (t.reference LIKE ir.reference or ir.reference is null)
+					)
+--				or 
+--					(
+--						ir.wildcard_field is not null 
+--						and 
+--							(
+--							t.details LIKE ir.wildcard_field
+--							or t.particulars LIKE ir.wildcard_field
+--							or t.code LIKE ir.wildcard_field
+--							or t.reference LIKE ir.wildcard_field
+--							)
+--					)
+			)
 		) matches
 		WHERE t_to_update.transaction_id = matches.transaction_id
 			and t_to_update.bank_account_id <> matches.other_party_account_id;
