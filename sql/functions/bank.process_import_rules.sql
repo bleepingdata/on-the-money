@@ -45,10 +45,10 @@ begin
 		where 
 			ir.wildcard_field is null
 			and
-			((t.type = ir.type or ir.type is null)
-			and (t.other_party_bank_account_number = ir.other_party_bank_account_number or ir.other_party_bank_account_number is null)
+			((t.other_party_bank_account_number = ir.other_party_bank_account_number or ir.other_party_bank_account_number is null)
 			and (
-					(t.details LIKE ir.details or ir.details is null)
+					(t.type = ir.type or ir.type is null)
+					and (t.details LIKE ir.details or ir.details is null)
 					and (t.particulars LIKE ir.particulars or ir.particulars is null)
 					and (t.code LIKE ir.code or ir.code is null)
 					and (t.reference LIKE ir.reference or ir.reference is null)
