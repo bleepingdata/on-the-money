@@ -113,7 +113,8 @@ other_party_bank_account_number varchar(56) null,
 details varchar(50) null,
 particulars varchar(50) null,
 code varchar(50) null,
-reference varchar(50) null
+reference varchar(50) null,
+wildcard_field varchar(50) null
 );
  
 -- drop table fact.account_summary_by_month
