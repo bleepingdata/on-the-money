@@ -17,6 +17,12 @@ begin
 		n_gl_grouping_id;
 
 
+	if (n_debit_account_id is null or n_credit_account_id is null)
+	then
+		RAISE EXCEPTION 'Missing n_debit_account_id or n_credit_account_id'
+    	USING HINT = 'Please check your parameters';
+    end if;
+     
 	insert
 	into
 		books.general_ledger ( gl_type_id,

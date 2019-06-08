@@ -6,6 +6,8 @@ begin
 	
 	
 	-- First sweep.  Do wildcard rules.
+	-- The only field that is matched is the wildcard field and start / end dates of rule. 
+	-- The wildcard field is matched to any of details, particulars, code, referenece.
 
 	update bank."transaction" as t_to_update
 	set other_party_account_id = matches.other_party_account_id -- select *
@@ -13,8 +15,8 @@ begin
 	(
 		select t.bank_account_id, t.transaction_id, ir.other_party_account_id
 		from bank."transaction" t
-			inner join bank.import_rule ir on t.bank_account_id = ir.bank_account_id 
-					and ir.start_date <= t.processed_date 
+			inner join bank.import_rule ir
+					on ir.start_date <= t.processed_date 
 					and ir.end_date >= t.processed_date
 		where 
 			ir.wildcard_field is not null 
@@ -32,6 +34,7 @@ begin
 		
 	
 	-- Second sweep.  Do all other rules. This sweep can overwrite wildcard rules.
+	-- Matches bank account (mandatory) and any of type, details, particulars, code or reference.
 	
 	update bank."transaction" as t_to_update
 	set other_party_account_id = matches.other_party_account_id -- select *
