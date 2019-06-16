@@ -71,14 +71,12 @@ bankid varchar(50) null,
 branchid varchar(50) null,
 acctid varchar(50) null,
 accttype varchar(50) null,
-dtstart date null,
-dtend date null,
 trntype varchar(50) null,
 dtposted date null,
 trnamt numeric(16,2) null,
-fitid int4 null,
+fitid varchar(50) null,
 name varchar(50) null,
-memo varchar(255) null
+memo varchar(255) NULL
 );
 
 create table bank.transaction
@@ -95,7 +93,6 @@ is_imported_to_gl boolean not null constraint df_bank_transaction_is_imported_to
 imported_to_gl_datetime timestamp null,
 transaction_date date not null,
 processed_date date null,
-transaction_xml xml not null,
 amount numeric(16,2)  not null,
 balance numeric(16,2) null,
 other_party_bank_account_number varchar(56) null,
@@ -103,7 +100,9 @@ type varchar(50) null,
 details varchar(50) null, 
 particulars varchar(50) null, 
 code varchar(50) null, 
-reference varchar(50) null
+reference varchar(50) NULL,
+ofx_name varchar(50) NULL,
+ofx_memo varchar(255) NULL
 );
 
 create table books.general_ledger
@@ -135,6 +134,8 @@ details varchar(50) null,
 particulars varchar(50) null,
 code varchar(50) null,
 reference varchar(50) null,
+ofx_name varchar(50) NULL,
+ofx_memo varchar(255) NULL,
 wildcard_field varchar(50) null
 );
 
