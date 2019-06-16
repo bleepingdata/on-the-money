@@ -51,10 +51,9 @@ cur = conn.cursor()
 cur.execute("select * from books.get_bank_account_id (%s, %s)", (s_bank_account_number, s_bank_account_friendly_name))
 row = cur.fetchone()
 n_bank_account_id=row[0]
-print (n_bank_account_id)
 conn.commit()
-conn.close()
-print ("Committed and closed")
+cur.execute("select * from load.prepare_ofx (%s)", [n_bank_account_id])
+conn.commit()
 
 parser = OFXTree()
 
@@ -77,7 +76,8 @@ conn = psycopg2.connect(database = s_databasename, user = s_username, password =
 cur = conn.cursor()
 
 for tx in txs:
-    cur.execute("select load.insert_ofx_transaction(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
+    dt_dtposted = tx.dtposted.date()
+    cur.execute("select load.insert_ofx_transaction(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
         (n_bank_account_id,
         datetime.datetime.now().date(),
 		0,
@@ -85,10 +85,8 @@ for tx in txs:
 		s_branchid,
 		s_acctid,
 		s_accttype,
-		datetime.datetime.now().date(),
-		datetime.datetime.now().date(),
 		tx.trntype,
-		datetime.datetime.now().date(), #tx.dtposted,
+		dt_dtposted,
 		tx.trnamt,
 		tx.fitid,
 		tx.name,
@@ -96,7 +94,21 @@ for tx in txs:
 
     
 conn.commit()
+
+# # Process the file
+cur.execute("select bank.insert_bank_transaction_from_ofx (%s)", [n_bank_account_id])
+row = cur.fetchone()
+n_import_identifier=row[0]
+conn.commit()
+
+cur.execute("select bank.process_import_rules ()")
+conn.commit()
+
+cur.execute("select books.insert_gl_from_bank_import (%s)", [n_import_identifier])
+conn.commit()
+
 conn.close()
+
 
 
 

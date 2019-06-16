@@ -7,7 +7,7 @@ begin
 	
 	-- First sweep.  Do wildcard rules.
 	-- The only field that is matched is the wildcard field and start / end dates of rule. 
-	-- The wildcard field is matched to any of details, particulars, code, referenece.
+	-- The wildcard field is matched to any of details, particulars, code, referenece, ofx_name or ofx_memo.
 
 	update bank."transaction" as t_to_update
 	set other_party_account_id = matches.other_party_account_id -- select *
@@ -26,6 +26,8 @@ begin
 				or t.particulars LIKE ir.wildcard_field
 				or t.code LIKE ir.wildcard_field
 				or t.reference LIKE ir.wildcard_field
+				or t.ofx_name like ir.wildcard_field
+				or t.ofx_memo like ir.wildcard_field
 				)
 
 		) matches
@@ -55,6 +57,8 @@ begin
 					and (t.particulars LIKE ir.particulars or ir.particulars is null)
 					and (t.code LIKE ir.code or ir.code is null)
 					and (t.reference LIKE ir.reference or ir.reference is null)
+					and (t.ofx_name LIKE ir.ofx_name or ir.ofx_name is null)
+					and (t.ofx_memo LIKE ir.ofx_memo or ir.ofx_memo is null)
 			))
 		) matches
 		WHERE t_to_update.transaction_id = matches.transaction_id

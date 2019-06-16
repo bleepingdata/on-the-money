@@ -10,6 +10,7 @@ drop table dimension.dates;
 
 drop table load.anz_excel;
 drop table load.anz_mortgage_excel;
+DROP TABLE load.ofx;
 
 drop table books.account;
 drop table books.account_type;
