@@ -13,7 +13,7 @@ begin
 	set other_party_account_id = matches.other_party_account_id -- select *
 	from 
 	(
-		select t.bank_account_id, t.transaction_id, ir.other_party_account_id
+		select t.bank_account_id, t.transaction_id, ir.other_party_account_id, ir.priority
 		from bank."transaction" t
 			inner join bank.import_rule ir
 					on ir.start_date <= t.processed_date 
@@ -29,6 +29,7 @@ begin
 				or t.ofx_name like ir.wildcard_field
 				or t.ofx_memo like ir.wildcard_field
 				)
+			order by ir.priority desc
 
 		) matches
 		WHERE t_to_update.transaction_id = matches.transaction_id
@@ -60,6 +61,7 @@ begin
 					and (t.ofx_name LIKE ir.ofx_name or ir.ofx_name is null)
 					and (t.ofx_memo LIKE ir.ofx_memo or ir.ofx_memo is null)
 			))
+			order by ir.priority desc
 		) matches
 		WHERE t_to_update.transaction_id = matches.transaction_id
 			and t_to_update.bank_account_id <> matches.other_party_account_id;
