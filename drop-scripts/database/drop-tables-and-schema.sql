@@ -15,9 +15,12 @@ DROP TABLE load.ofx;
 drop table books.account;
 drop table books.account_type;
 
+drop table working.import_rule_matches;
 
 drop schema bank;
 drop schema books;
 drop schema dimension;
 drop schema fact;
 drop schema load;
+drop schema working;
+

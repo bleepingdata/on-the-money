@@ -23,7 +23,7 @@ psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.months.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_balance.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_movement.sql
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.transactions.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.transaction.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.uncategorised_transactions.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.gl_entries.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_transfers.sql
@@ -34,6 +34,8 @@ psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_bank_transaction_from_anz_mortgage_excel.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_bank_transaction_from_ofx.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_ofx.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_type_only.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_wildcard.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.process_import_rules.sql
 
