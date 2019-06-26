@@ -3,7 +3,9 @@ drop function bank.insert_bank_transaction_from_anz_excel;
 drop function bank.insert_bank_transaction_from_anz_mortgage_excel;
 drop function bank.insert_bank_transaction_from_ofx;
 drop function bank.insert_import_rule;
+drop function bank.insert_import_rule_ofx;
 drop function bank.insert_import_rule_wildcard;
+drop function bank.insert_import_rule_type_only;
 drop function bank.process_import_rules;
 
 drop function books.delete_gl_entries_for_account;
