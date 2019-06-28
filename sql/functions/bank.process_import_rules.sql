@@ -37,11 +37,11 @@ begin
 	insert into working.import_rule_matches (transaction_id, import_rule_id, rule_priority, rule_start_date, rule_row_creation_date)
 	select t.transaction_id, ir.import_rule_id, ir.priority, ir.start_date, ir.row_creation_date
 	from bank."transaction" t
-		inner join bank.import_rule ir on t.bank_account_id = ir.bank_account_id 
-				and ir.start_date <= t.processed_date 
+		inner join bank.import_rule ir on ir.start_date <= t.processed_date 
 				and ir.end_date >= t.processed_date
 	where 
 		ir.wildcard_field is null
+		and (t.bank_account_id = ir.bank_account_id or ir.bank_account_id is null)
 		and
 		((t.other_party_bank_account_number = ir.other_party_bank_account_number or ir.other_party_bank_account_number is null)
 		and (
