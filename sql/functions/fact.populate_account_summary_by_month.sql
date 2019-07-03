@@ -39,7 +39,7 @@ where
 		books.general_ledger)
 	and d.month_year_date <= (
 	select
-		max(gl_date)
+		(date_trunc('month', max(gl_date)) + interval '1 month' - interval '1 day')::date
 	from
 		books.general_ledger)
 group by a.account_id, d.month_year_date
