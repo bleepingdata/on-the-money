@@ -13,7 +13,7 @@ select gl.gl_id,
 	gl.debit_amount, 
 	gl.credit_amount, 
 	gl.memo, 
-	gl.source_identifier
+	gl.bank_transaction_id
 from books.general_ledger gl
 inner join books.account a_bank_transfers 
 	on gl.account_id = a_bank_transfers.account_id

@@ -26,22 +26,19 @@ begin
 	select into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
 		s_memo
 		case when t.amount > 0 
-			then a.account_id 
+			then t.account_id 
 			else 
 				case when other_party_account_id is null then n_uncategorised_expense_account_id else other_party_account_id end 
 			end,
 		ABS(t.amount),
 		case when t.amount > 0 
 			then case when other_party_account_id is null then n_uncategorised_income_account_id else other_party_account_id end
-			else a.account_id 
+			else t.account_id 
 			end,
 		ABS(t.amount),
 		t.processed_date,
 		'imported'
 	from bank.transaction t
-		inner join books.account a on 
-			(t.bank_account_friendly_name = a.external_friendly_name
-			  or t.bank_account_number = a.external_unique_identifier)
 	where t.transaction_id = n_transaction_id;
 
 	perform books.insert_gl_entry_basic(1::int2, -- JE 
