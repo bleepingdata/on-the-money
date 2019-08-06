@@ -39,7 +39,7 @@ from
 		ofx_memo) select
 			a.external_friendly_name,
 			a.external_unique_identifier,
-			a.account_id,
+			a.bank_account_id,
 			n_import_identifier,
 			now(),
 			cast( o.dtposted as date ),
@@ -50,7 +50,7 @@ from
 			o.memo
 		from
 			load.ofx o
-			INNER JOIN books.account a ON o.bank_account_id = a.account_id
+			INNER JOIN bank.account a ON o.bank_account_id = a.bank_account_id
 		where o.bank_account_id=n_bank_account_id;
 
 return n_import_identifier;

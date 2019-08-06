@@ -7,7 +7,7 @@ n_credit_account_id int,
 n_credit_amount numeric(16,2),
 d_gl_date date,
 s_memo varchar(256),
-n_source_identifier int8) 
+n_bank_transaction_id int8) 
 returns int as $$ 
 declare n_gl_grouping_id int8;
 begin
@@ -32,7 +32,7 @@ begin
 		debit_amount,
 		credit_amount,
 		memo,
-		source_identifier)
+		bank_transaction_id)
 	values ( n_gl_type_id,
  	d_gl_date,
 	n_gl_grouping_id,
@@ -40,7 +40,7 @@ begin
 	n_debit_amount,
 	0,
 	s_memo,
-	n_source_identifier);
+	n_bank_transaction_id);
 	
 	insert into
 		books.general_ledger ( gl_type_id,
@@ -50,7 +50,7 @@ begin
 		debit_amount,
 		credit_amount,
 		memo,
-		source_identifier)
+		bank_transaction_id)
 	values ( n_gl_type_id,
 	 d_gl_date,
 	n_gl_grouping_id,
@@ -58,7 +58,7 @@ begin
 	0,
 	n_credit_amount,
 	s_memo,
-	n_source_identifier);
+	n_bank_transaction_id);
 	
 	return 1;
 end;

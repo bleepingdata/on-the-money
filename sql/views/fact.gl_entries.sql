@@ -11,6 +11,6 @@ select gl_id,
 	debit_amount, 
 	credit_amount, 
 	memo, 
-	source_identifier
+	bank_transaction_id
 from books.general_ledger
 ;

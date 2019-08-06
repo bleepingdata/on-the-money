@@ -8,3 +8,5 @@ drop view fact.transaction;
 drop view fact.uncategorised_transactions;
 drop view fact.gl_entries;
 drop view fact.bank_transfers;
+
+drop view fact.cash_balance;
