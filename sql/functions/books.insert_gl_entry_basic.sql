@@ -7,6 +7,8 @@ n_credit_account_id int,
 n_credit_amount numeric(16,2),
 d_gl_date date,
 s_memo varchar(256),
+n_bank_account_id int4,
+n_bank_account_is_debit boolean,
 n_bank_transaction_id int8) 
 returns int as $$ 
 declare n_gl_grouping_id int8;
@@ -32,6 +34,7 @@ begin
 		debit_amount,
 		credit_amount,
 		memo,
+		bank_account_id,
 		bank_transaction_id)
 	values ( n_gl_type_id,
  	d_gl_date,
@@ -40,6 +43,7 @@ begin
 	n_debit_amount,
 	0,
 	s_memo,
+	case when n_bank_account_is_debit = true then n_bank_account_id else null end,
 	n_bank_transaction_id);
 	
 	insert into
@@ -50,6 +54,7 @@ begin
 		debit_amount,
 		credit_amount,
 		memo,
+		bank_account_id,
 		bank_transaction_id)
 	values ( n_gl_type_id,
 	 d_gl_date,
@@ -58,6 +63,7 @@ begin
 	0,
 	n_credit_amount,
 	s_memo,
+	case when n_bank_account_is_debit = false then n_bank_account_id else null end,
 	n_bank_transaction_id);
 	
 	return 1;

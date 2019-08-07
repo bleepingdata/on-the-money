@@ -28,6 +28,7 @@ psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.gl_entries.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_transfers.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.cash_balance.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_account_balance.sql
 
 #functions
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.delete_bank_transactions_for_account.sql
