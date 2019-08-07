@@ -52,7 +52,7 @@ group by a.bank_account_id, d.month_year_date
 				bank_account_id, 
 				date_part( 'year', gl_date ) as year, 
 				date_part( 'month', gl_date ) as month_number, 
-				date_trunc( 'month', max( gl_date )) + interval '1 month' - interval '1 day' as month_end_date, 
+				cast(date_trunc( 'month', max( gl_date )) + interval '1 month' - interval '1 day' as date) as month_end_date, 
 				sum(debit_amount) as debit_amount, 
 				sum(credit_amount) as credit_amount
 			from

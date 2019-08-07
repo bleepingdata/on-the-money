@@ -12,3 +12,4 @@ drop view fact.bank_transfers;
 drop view fact.cash_balance;
 
 drop view fact.bank_account_balance;
+drop view dimension.bank_account;
