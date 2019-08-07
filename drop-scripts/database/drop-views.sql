@@ -10,3 +10,5 @@ drop view fact.gl_entries;
 drop view fact.bank_transfers;
 
 drop view fact.cash_balance;
+
+drop view fact.bank_account_balance;

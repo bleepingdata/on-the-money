@@ -147,12 +147,12 @@ gl_date date not null,
 gl_grouping_id bigint not null, -- group related rows together
 row_creation_date timestamp not null constraint df_gl_dt default(current_timestamp),
 account_id int null references books.account(account_id),
-debit_amount numeric(16,2)  null,
-credit_amount numeric(16,2) null,
+debit_amount numeric(16,2) not null constraint df_gl_dr default(0),
+credit_amount numeric(16,2) not null constraint df_gl_cr default(0),
 memo varchar(256) null,
-bank_transaction_id int8 null  -- optional. bank transaction id from input table
+bank_account_id int4 null references bank.account(bank_account_id), -- optional. bank account id, matches bank.account id.
+bank_transaction_id int8 null references bank.transaction(transaction_id)  -- optional. bank transaction id from input table
 );
-
 
 create table bank.import_rule
 (

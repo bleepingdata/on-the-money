@@ -10,6 +10,8 @@ n_credit_account_id int;
 n_credit_amount numeric(16,2);
 d_gl_date date;
 s_memo varchar(256);
+n_bank_account_id int4;
+n_bank_account_is_debit boolean;
 n_source_identifier int8;
 n_uncategorised_income_account_id int;
 n_uncategorised_expense_account_id int;
@@ -24,7 +26,7 @@ begin
 		from books.account a where description ='uncategorised expense';
 	
 	select into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
-		s_memo
+		n_bank_account_id, n_bank_account_is_debit, s_memo
 		case when t.amount > 0 
 			then t.account_id 
 			else 
@@ -37,6 +39,10 @@ begin
 			end,
 		ABS(t.amount),
 		t.processed_date,
+		t.bank_account_id,
+		case when t.amount > 0 
+		    then true
+		    else false end, -- n_bank_account_is_debit
 		'imported'
 	from bank.transaction t
 	where t.transaction_id = n_transaction_id;
@@ -48,6 +54,8 @@ begin
 		n_credit_amount::numeric(16,2), 
 		d_gl_date::date, 
 		s_memo::varchar,
+		n_bank_account_id::int4,
+		n_bank_account_is_debit::boolean,
 		n_transaction_id::int8);
 	
 	return 1;
