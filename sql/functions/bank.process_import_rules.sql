@@ -55,7 +55,7 @@ begin
 		));
 
 	update bank."transaction" as t_to_update
-	set account_id = matches.account_id, 
+	set account_id = coalesce (matches.account_id, t_to_update.account_id), 
 		other_party_account_id = matches.other_party_account_id
 	from
 	(WITH prioritised_rules AS (
