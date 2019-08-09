@@ -8,6 +8,7 @@ description varchar(50) not null constraint uq_books_account_type_description un
 insert into bank.account_type(bank_account_type_id, description) values (0, 'unknown account type');
 insert into bank.account_type(bank_account_type_id, description) values (1, 'Cash');
 insert into bank.account_type(bank_account_type_id, description) values (2, 'Debt');
+insert into bank.account_type(bank_account_type_id, description) values (3, 'Credit');
 
 create table bank.account
 (
