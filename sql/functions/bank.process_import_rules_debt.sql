@@ -1,9 +1,8 @@
-drop function if exists bank.process_import_rules();
+drop function if exists bank.process_import_rules_debt();
 
-create or replace function bank.process_import_rules ()
+create or replace function bank.process_import_rules_debt ()
 RETURNS void AS $$
 begin
-	-- process all import rules, except for debt.
 	
 	-- clear out table that holds the set of all matches.
 	truncate table working.import_rule_matches;
@@ -21,7 +20,7 @@ begin
 		INNER JOIN bank.account ba ON t.bank_account_id = ba.bank_account_id
 		INNER JOIN bank.account_type at ON ba.bank_account_type_id = at.bank_account_type_id		
 	where 
-		at.description <> 'Debt' 
+		at.description = 'Debt' 
 	    ir.wildcard_field is not null 
 		and 
 			(
@@ -32,6 +31,7 @@ begin
 			or t.ofx_name like ir.wildcard_field
 			or t.ofx_memo like ir.wildcard_field
 			);
+
 		
 	
 	-- Second sweep.  Do all other rules. This sweep can overwrite wildcard rules.
