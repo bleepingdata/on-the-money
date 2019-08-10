@@ -19,8 +19,10 @@ drop table books.account_type;
 
 drop table working.import_rule_matches;
 
+drop table bank.account_debt_type;
 drop table bank.account;
 drop table bank.account_type;
+drop table bank.debt_type;
 
 drop schema bank;
 drop schema books;
