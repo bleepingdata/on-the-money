@@ -56,7 +56,8 @@ begin
 
 	update bank."transaction" as t_to_update
 	set account_id = coalesce (matches.account_id, t_to_update.account_id), 
-		other_party_account_id = matches.other_party_account_id
+		other_party_account_id = matches.other_party_account_id,
+		matched_import_rule_id = matches.import_rule_id
 	from
 	(WITH prioritised_rules AS (
            SELECT m.transaction_id, 
@@ -77,10 +78,11 @@ begin
 	 
 	-- GL transactions where the other party account id does not match the import rules (usually because new rules have been added)
 	update books.general_ledger as gl
-		set account_id = matches.other_party_account_id
+		set account_id = matches.other_party_account_id,
+		matched_import_rule_id = matches.matched_import_rule_id
 		from 
 		(
-		select gl.gl_id, gl.account_id, t.other_party_account_id 
+		select gl.gl_id, gl.account_id, t.other_party_account_id, t.matched_import_rule_id
 		from books.general_ledger gl 
 		inner join bank."transaction" t on gl.bank_transaction_id = t.transaction_id
 		inner join bank.bank_account_gl_account_link link_account_def 

@@ -12,7 +12,7 @@ d_gl_date date;
 s_memo varchar(256);
 n_bank_account_id int4;
 n_bank_account_is_debit boolean;
-n_source_identifier int8;
+n_matched_import_rule_id int4;
 n_uncategorised_income_account_id int;
 n_uncategorised_expense_account_id int;
 begin
@@ -26,7 +26,7 @@ begin
 		from books.account a where description ='uncategorised expense';
 	
 	select into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
-		n_bank_account_id, n_bank_account_is_debit, s_memo
+		n_bank_account_id, n_bank_account_is_debit, n_matched_import_rule_id, s_memo
 		case when t.amount > 0 
 			then t.account_id 
 			else 
@@ -43,6 +43,7 @@ begin
 		case when t.amount > 0 
 		    then true
 		    else false end, -- n_bank_account_is_debit
+		t.matched_import_rule_id,
 		'imported'
 	from bank.transaction t
 	where t.transaction_id = n_transaction_id;
@@ -56,7 +57,8 @@ begin
 		s_memo::varchar,
 		n_bank_account_id::int4,
 		n_bank_account_is_debit::boolean,
-		n_transaction_id::int8);
+		n_transaction_id::int8,
+	    n_matched_import_rule_id::int4);
 	
 	return 1;
 end;
