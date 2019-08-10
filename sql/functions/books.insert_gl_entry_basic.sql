@@ -9,7 +9,8 @@ d_gl_date date,
 s_memo varchar(256),
 n_bank_account_id int4,
 n_bank_account_is_debit boolean,
-n_bank_transaction_id int8) 
+n_bank_transaction_id int8,
+n_matched_import_rule_id int4) 
 returns int as $$ 
 declare n_gl_grouping_id int8;
 begin
@@ -35,7 +36,8 @@ begin
 		credit_amount,
 		memo,
 		bank_account_id,
-		bank_transaction_id)
+		bank_transaction_id,
+		matched_import_rule_id)
 	values ( n_gl_type_id,
  	d_gl_date,
 	n_gl_grouping_id,
@@ -44,7 +46,8 @@ begin
 	0,
 	s_memo,
 	case when n_bank_account_is_debit = true then n_bank_account_id else null end,
-	n_bank_transaction_id);
+	n_bank_transaction_id,
+    n_matched_import_rule_id);
 	
 	insert into
 		books.general_ledger ( gl_type_id,
