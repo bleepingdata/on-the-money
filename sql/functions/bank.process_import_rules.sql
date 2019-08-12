@@ -18,11 +18,8 @@ begin
 		inner join bank.import_rule ir
 				on ir.start_date <= t.processed_date 
 				and ir.end_date >= t.processed_date
-		INNER JOIN bank.account ba ON t.bank_account_id = ba.bank_account_id
-		INNER JOIN bank.account_type at ON ba.bank_account_type_id = at.bank_account_type_id		
 	where 
-		at.description <> 'Debt' 
-	    ir.wildcard_field is not null 
+	     ir.wildcard_field is not null 
 		and 
 			(
 			t.details LIKE ir.wildcard_field
