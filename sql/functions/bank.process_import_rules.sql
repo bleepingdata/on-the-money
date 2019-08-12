@@ -55,9 +55,7 @@ begin
 		));
 
 	update bank."transaction" as t_to_update
-	set account_id = coalesce (matches.account_id, t_to_update.account_id), 
-		other_party_account_id = matches.other_party_account_id,
-		matched_import_rule_id = matches.import_rule_id
+	set matched_import_rule_id = matches.import_rule_id
 	from
 	(WITH prioritised_rules AS (
            SELECT m.transaction_id, 
@@ -72,9 +70,8 @@ begin
 	  FROM prioritised_rules pr
 	  	inner join bank.import_rule r on pr.import_rule_id = r.import_rule_id
 	  WHERE pr.row_num = 1  -- get the matching rule with the highest priority
-	 ) matches
-	 where t_to_update.transaction_id = matches.transaction_id
-	 	and t_to_update.account_id <> matches.other_party_account_id;
+	 )  matches
+	 where t_to_update.transaction_id = matches.transaction_id;
 	 
 	-- GL transactions where the other party account id does not match the import rules (usually because new rules have been added)
 	update books.general_ledger as gl
@@ -88,9 +85,7 @@ begin
 		inner join bank.bank_account_gl_account_link link_account_def 
 			on t.bank_account_id = link_account_def.bank_account_id and link_account_def.is_default = true
 		where (gl.account_id not in 
-				(select account_id from bank.bank_account_gl_account_link where bank_account_id = t.bank_account_id) -- get the other side of the transaction
-			and gl.account_id <> t.other_party_account_id)
-			or (t.other_party_account_id is not null and gl.account_id in (select account_id from books.account where description in ('uncategorised expense', 'uncategorised income')))
+				(select account_id from bank.bank_account_gl_account_link where bank_account_id = t.bank_account_id)) -- get the other side of the transaction
 	) matches
 	where gl.gl_id = matches.gl_id;
 
