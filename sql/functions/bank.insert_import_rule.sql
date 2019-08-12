@@ -39,8 +39,8 @@ begin
 		return 0;
 	end if;
 
-	insert into bank.import_rule (import_rule_type_id, bank_account_id, account_id, other_party_account_id, other_party_account_id_2, priority, type, other_party_bank_account_number, details, particulars, code, reference)
-		values (n_import_rule_type_id, n_bank_account_id, n_account_id, n_other_party_account_id, n_other_party_account_id_2, n_priority, s_type, s_other_party_bank_account_number, s_details, s_particulars, s_code, s_reference)
+	insert into bank.import_rule (import_rule_type_id, bank_account_id, account_id, account_id_2, other_party_account_id, other_party_account_id_2, priority, type, other_party_bank_account_number, details, particulars, code, reference, ofx_name, ofx_memo, wildcard_field)
+		values (n_import_rule_type_id, n_bank_account_id, n_account_id, n_account_id_2, n_other_party_account_id, n_other_party_account_id_2, n_priority, s_type, s_other_party_bank_account_number, s_details, s_particulars, s_code, s_reference, s_ofx_name, s_ofx_memo, s_wildcard_field)
 	 RETURNING import_rule_id into n_import_rule_id;
 	
 	return n_import_rule_id;

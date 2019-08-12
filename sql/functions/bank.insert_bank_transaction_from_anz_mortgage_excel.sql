@@ -5,7 +5,6 @@ create or replace function bank.insert_bank_transaction_from_anz_mortgage_excel 
 s_bank_account_friendly_name varchar(256) = null ) 
 returns int8 as $$ 
 declare n_bank_account_id int;
-n_account_id int;
 n_import_identifier int8;
 begin
 
@@ -28,15 +27,6 @@ s_bank_account_friendly_name
 	using HINT = 'Please check incoming parameters for s_bank_account_number and s_bank_account_friendly_name';
 end if;
 
--- get the default linked gl account for this bank account
-select
-	gl_link.account_id into
-		n_account_id
-	from
-		bank.bank_account_gl_account_link gl_link
-	where bank_account_id = n_bank_account_id
-		and is_default = true;
-	
 select
 	nextval('bank.import_identifier') into
 		n_import_identifier;
@@ -60,7 +50,6 @@ from
 		bank.transaction ( bank_account_friendly_name,
 		bank_account_number,
 		bank_account_id,
-		account_id,
 		import_identifier,
 		import_datetime,
 		transaction_date,
@@ -76,7 +65,6 @@ from
 			a.bank_account_friendly_name,
 			a.bank_account_number,
 			n_bank_account_id,
-			n_account_id,
 			n_import_identifier,
 			now(),
 			cast( a."Date" as date ),

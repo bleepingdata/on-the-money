@@ -28,14 +28,14 @@ begin
 	select into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
 		n_bank_account_id, n_bank_account_is_debit, n_matched_import_rule_id, s_memo
 		case when t.amount > 0 
-			then t.account_id 
+			then b_g.account_id
 			else 
 				case when other_party_account_id is null then n_uncategorised_expense_account_id else other_party_account_id end 
 			end,
 		ABS(t.amount),
 		case when t.amount > 0 
 			then case when other_party_account_id is null then n_uncategorised_income_account_id else other_party_account_id end
-			else t.account_id 
+			else b_g.account_id 
 			end,
 		ABS(t.amount),
 		t.processed_date,
@@ -46,6 +46,7 @@ begin
 		t.matched_import_rule_id,
 		'imported'
 	from bank.transaction t
+	    left JOIN bank.bank_account_gl_account_link b_g ON t.bank_account_id = b_g.bank_account_id AND b_g.is_default=true
 	where t.transaction_id = n_transaction_id;
 
 	perform books.insert_gl_entry_basic(1::int2, -- JE 
