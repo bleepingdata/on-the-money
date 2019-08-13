@@ -3,4 +3,3 @@ create schema fact;
 create schema dimension;
 create schema load;
 create schema bank;
-create schema working;

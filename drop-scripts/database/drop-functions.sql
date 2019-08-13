@@ -6,7 +6,9 @@ drop function bank.insert_import_rule;
 drop function bank.insert_import_rule_ofx;
 drop function bank.insert_import_rule_wildcard;
 drop function bank.insert_import_rule_type_only;
-drop function bank.process_import_rules;
+drop function bank.process_import_rules_for_transaction;
+drop function bank.process_import_rules_from_bank_import;
+
 
 drop function books.delete_gl_entries_for_account;
 drop function books.get_account_balance_at_date;
