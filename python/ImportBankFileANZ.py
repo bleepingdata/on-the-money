@@ -92,7 +92,7 @@ cur.execute("select bank.insert_bank_transaction_from_anz_excel (%s, %s)", (s_ba
 row = cur.fetchone()
 n_import_identifier=row[0]
 
-cur.execute("select bank.process_import_rules ()")
+cur.execute("select bank.process_import_rules_from_bank_import (%s)", (n_import_identifier,))
 
 cur.execute("select books.insert_gl_from_bank_import (%s)", (n_import_identifier,))
 

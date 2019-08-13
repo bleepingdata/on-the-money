@@ -41,7 +41,8 @@ psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_ofx.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_type_only.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_wildcard.sql
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.process_import_rules.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.process_import_rules_from_bank_import.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.process_import_rules_for_transaction.sql
 
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\books.delete_gl_entries_for_account.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_account_balance_at_date.sql
