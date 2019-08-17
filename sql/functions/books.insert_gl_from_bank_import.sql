@@ -11,7 +11,8 @@ function books.insert_gl_from_bank_import ( n_import_identifier int8
 		perform 
 		(books.insert_gl_entry_from_bank_transaction(transaction_id))
 		from bank.transaction where import_identifier = n_import_identifier
-		and processed_date is not null;
+		and processed_date is not NULL
+		ORDER BY processed_date asc;
 
 
 end;
