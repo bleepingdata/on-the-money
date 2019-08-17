@@ -3,6 +3,8 @@ drop function bank.insert_bank_transaction_from_anz_excel;
 drop function bank.insert_bank_transaction_from_anz_mortgage_excel;
 drop function bank.insert_bank_transaction_from_ofx;
 drop function bank.insert_import_rule;
+drop function bank.insert_import_rule_fields_to_match;
+drop function bank.insert_import_rule_gl_rules_loan_repayment;
 drop function bank.insert_import_rule_ofx;
 drop function bank.insert_import_rule_wildcard;
 drop function bank.insert_import_rule_type_only;
