@@ -1,8 +1,8 @@
-DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_expense;
+DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_liabilities;
 
-create or replace function bank.insert_import_rule_gl_rules_expense
+create or replace function bank.insert_import_rule_gl_rules_liabilities
 	(s_cash_account varchar(50),
-	s_expense_account varchar(50),
+	s_liabilities_account varchar(50),
 	n_priority smallint default 0,
 	s_bank_account varchar(50) default null,
 	s_type varchar(50) default null,
@@ -18,20 +18,20 @@ create or replace function bank.insert_import_rule_gl_rules_expense
 returns void as $$
 declare n_import_rule_type_id int2;
 n_cash_account_id int4;
-n_expense_account_id int4;
+n_liabilities_account_id int4;
 n_import_rule_id int;
 begin
    
     select account_id into n_cash_account_id from books.account where description = s_cash_account;
-	select account_id into n_expense_account_id from books.account where description = s_expense_account;
+	select account_id into n_liabilities_account_id from books.account where description = s_liabilities_account;
    
-	if (n_cash_account_id is null or n_expense_account_id is null)
+	if (n_cash_account_id is null or n_liabilities_account_id is null)
 	then 
-		raise exception 'unable to insert import rule because cash account %s or expense account %s cannot be found', s_cash_account, s_expense_account;
+		raise exception 'unable to insert import rule because cash account %s or liabilities account %s cannot be found', s_cash_account, s_liabilities_account;
 		return;
 	end if;
 
-	SELECT bank.insert_import_rule(s_import_rule_type:='expense', n_priority:=n_priority) into n_import_rule_id;
+	SELECT bank.insert_import_rule(s_import_rule_type:='liabilities', n_priority:=n_priority) into n_import_rule_id;
 
 	if n_import_rule_id is null
 	then 
@@ -52,10 +52,10 @@ begin
 		s_ofx_memo:=s_ofx_memo,
 		s_wildcard_field:=s_wildcard_field);
 
-	insert into bank.import_rule_gl_rules_expense (import_rule_id, cash_account_id, expense_account_id)
+	insert into bank.import_rule_gl_rules_liabilities (import_rule_id, cash_account_id, liabilities_account_id)
 		values (n_import_rule_id, 
 				n_cash_account_id,
-				n_expense_account_id);
+				n_liabilities_account_id);
 			
 	return;
 end;
