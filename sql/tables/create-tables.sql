@@ -120,6 +120,7 @@ end_date date not null constraint df_bank_import_rule_end_date default('2099-12-
 create table bank.import_rule_fields_to_match
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_fields_to_match unique,
+bank_account_id int4 null references bank.account(bank_account_id),
 type varchar(50) null,
 other_party_bank_account_number varchar(56) null,
 details varchar(50) null,
@@ -134,7 +135,6 @@ wildcard_field varchar(50) null
 create table bank.import_rule_gl_rules_assets
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_gl_rules_assets unique,
-bank_account_id int4 null references bank.account(bank_account_id),
 cash_account_id int4 null references books.account(account_id),
 assets_account_id int4 not null references books.account(account_id)
 );
@@ -142,7 +142,6 @@ assets_account_id int4 not null references books.account(account_id)
 create table bank.import_rule_gl_rules_liability
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_gl_rules_liability unique,
-bank_account_id int4 null references bank.account(bank_account_id),
 cash_account_id int4 null references books.account(account_id),
 liability_account_id int4 not null references books.account(account_id)
 );
@@ -150,15 +149,13 @@ liability_account_id int4 not null references books.account(account_id)
 create table bank.import_rule_gl_rules_equity
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_gl_rules_equity unique,
-bank_account_id int4 null references bank.account(bank_account_id),
-cash_account_id int4 null references books.account(account_id),
+bank_account_account_id int4 null references books.account(account_id),
 equity_account_id int4 not null references books.account(account_id)
 );
 
 create table bank.import_rule_gl_rules_income
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_gl_rules_income unique,
-bank_account_id int4 null references bank.account(bank_account_id),
 cash_account_id int4 null references books.account(account_id),
 income_account_id int4 not null references books.account(account_id)
 );
@@ -166,7 +163,6 @@ income_account_id int4 not null references books.account(account_id)
 create table bank.import_rule_gl_rules_expense
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_gl_rules_expense unique,
-bank_account_id int4 null references bank.account(bank_account_id),
 cash_account_id int4 null references books.account(account_id),
 expense_account_id int4 not null references books.account(account_id)
 );
@@ -174,7 +170,6 @@ expense_account_id int4 not null references books.account(account_id)
 create table bank.import_rule_gl_rules_loan_repayment
 (
 import_rule_id int4 not null references bank.import_rule(import_rule_id) constraint uq_bank_import_rule_gl_rules_loan_repayment unique,
-bank_account_id int4 null references bank.account(bank_account_id),
 cash_account_id int4 not null references books.account(account_id),
 bank_account_interest_payable_account_id int4 null references books.account(account_id),
 bank_account_loan_principal_account_id int4 not null references books.account(account_id)
