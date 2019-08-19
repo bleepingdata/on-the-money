@@ -5,13 +5,7 @@ drop table books.general_ledger;
 
 drop table bank.transaction;
 
-drop table bank.import_rule_gl_rules_liability;
-drop table bank.import_rule_gl_rules_equity;
-drop table bank.import_rule_gl_rules_income;
-drop table bank.import_rule_gl_rules_expense;
-drop table bank.import_rule_gl_rules_loan_repayment;
-drop table bank.import_rule_gl_rules_assets;
-
+drop table bank.import_rule_gl_matrix;
 drop table bank.import_rule_fields_to_match;
 drop table bank.import_rule;
 

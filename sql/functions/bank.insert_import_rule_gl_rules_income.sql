@@ -1,8 +1,8 @@
 DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_income;
 
 create or replace function bank.insert_import_rule_gl_rules_income
-	(s_cash_account varchar(50),
-	s_income_account varchar(50),
+	(s_income_account varchar(50),
+	s_cash_account varchar(50),
 	n_priority smallint default 0,
 	s_bank_account varchar(50) default null,
 	s_type varchar(50) default null,
@@ -52,7 +52,7 @@ begin
 		s_ofx_memo:=s_ofx_memo,
 		s_wildcard_field:=s_wildcard_field);
 
-	insert into bank.import_rule_gl_rules_income (import_rule_id, cash_account_id, income_account_id)
+	insert into bank.import_rule_gl_matrix (import_rule_id, debit_account_id_1, credit_account_id_1)
 		values (n_import_rule_id, 
 				n_cash_account_id,
 				n_income_account_id);

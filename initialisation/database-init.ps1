@@ -39,7 +39,7 @@ psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_bank_transaction_from_ofx.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_fields_to_match.sql
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_assets.sql
+psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_assets_purchase.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_liabilities.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_equity.sql
 psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_income.sql
