@@ -1,8 +1,8 @@
-DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_loan_interest;
+DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_interest_only_loan_repayment;
 
-create or replace function bank.insert_import_rule_gl_rules_loan_interest
+create or replace function bank.insert_import_rule_gl_rules_interest_only_loan_repayment
 	(s_interest_payable_account varchar(50),
-	s_interest_expense_account varchar(50),
+	s_cash_account varchar(50),
 	n_priority smallint default 0,
 	s_bank_account varchar(50) default null,
 	s_type varchar(50) default null,
@@ -16,22 +16,22 @@ create or replace function bank.insert_import_rule_gl_rules_loan_interest
 	s_wildcard_field varchar(50) default null
 	)
 returns void as $$
-declare n_import_rule_type_id int2;
-n_interest_payable_account_id int4;
-n_interest_expense_account_id int4;
+declare n_import_rule_type_id SMALLINT;
+n_interest_payable_account_id int;
+n_cash_account_id int;
 n_import_rule_id int;
 begin
    
     select account_id into n_interest_payable_account_id from books.account where description = s_interest_payable_account;
-	select account_id into n_interest_expense_account_id from books.account where description = s_interest_expense_account;
+    select account_id into n_cash_account_id from books.account where description = s_cash_account;
    
-	if (n_interest_payable_account_id is null or n_interest_expense_account_id is null)
+	if (n_interest_payable_account_id is null or n_cash_account_id is null)
 	then 
-		raise exception 'unable to insert import rule because interest payable account %s or interest expense account %s cannot be found', s_interest_payable_account, s_interest_expense_account;
+		raise exception 'unable to insert import rule because interest payable account %s or cash account %s cannot be found', s_interest_payable_account, s_cash_account;
 		return;
 	end if;
 
-	SELECT bank.insert_import_rule(s_import_rule_type:='loan-interest', n_priority:=n_priority) into n_import_rule_id;
+	SELECT bank.insert_import_rule(s_import_rule_type:='interest-only-loan-repayment', n_priority:=n_priority) into n_import_rule_id;
 
 	if n_import_rule_id is null
 	then 
@@ -54,9 +54,9 @@ begin
 
 	insert into bank.import_rule_gl_matrix (import_rule_id, debit_account_id_1, credit_account_id_1)
 		values (n_import_rule_id, 
-				n_interest_expense_account_id,
-				n_interest_payable_account_id);
-			
+				n_interest_payable_account_id, 
+				n_cash_account_id);
+		
 	return;
 end;
 $$ language plpgsql;
