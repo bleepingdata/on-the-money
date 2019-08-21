@@ -1,19 +1,26 @@
-﻿# Requires pgpass.conf file in C:\Users\<username>\AppData\Roaming\postgresql, in format host:port:*:username:password
-Param([Parameter(Mandatory=$true)]
-    $dbname)
+﻿# Requires pgpass.conf file in C:\Users\steph\AppData\Roaming\postgresql, in format host:port:*:username:password
+Param([Parameter(Mandatory=$false)]
+    $hostname='localhost',
+    [Parameter(Mandatory=$false)]
+    $port='5432',
+    [Parameter(Mandatory=$false)]
+    $username='postgres',
+    [Parameter(Mandatory=$false)]
+    $dbname='onthemoney')
 
-    Write-Output $dbname
+    Write-Output "host: $hostname, port: $port, username: $username, database: $dbname"
+
 # database
-# psql --host=192.168.20.20 --port=32769 --username=otmadmin -f ..\..\on-the-money\sql\database\create-database.sql
+# psql --host=$hostname --port=$port --username=$username -f ..\..\on-the-money\sql\database\create-database.sql
 
 # schema
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .\database\drop-views.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-views.sql
 
 # tables
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .\database\drop-functions.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-functions.sql
 
 # sequences
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .\database\drop-other-objects.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-other-objects.sql
 
 # views
-psql --host=192.168.20.20 --port=32769 --username=otmadmin --dbname $dbname -f .\database\drop-tables-and-schema.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-tables-and-schema.sql

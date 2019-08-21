@@ -18,39 +18,40 @@ begin
 		inner join bank.import_rule ir
 				on ir.start_date <= t.processed_date 
 				and ir.end_date >= t.processed_date
+		INNER JOIN bank.import_rule_fields_to_match irf
+			ON ir.import_rule_id = irf.import_rule_id
 	where 
 	    t.transaction_id = n_transaction_id
-	    and ir.wildcard_field is not null 
+	    and irf.wildcard_field is not null 
 		and 
 			(
-			t.details LIKE ir.wildcard_field
-			or t.particulars LIKE ir.wildcard_field
-			or t.code LIKE ir.wildcard_field
-			or t.reference LIKE ir.wildcard_field
-			or t.ofx_name like ir.wildcard_field
-			or t.ofx_memo like ir.wildcard_field
+			t.details LIKE irf.wildcard_field
+			or t.particulars LIKE irf.wildcard_field
+			or t.code LIKE irf.wildcard_field
+			or t.reference LIKE irf.wildcard_field
+			or t.ofx_name like irf.wildcard_field
+			or t.ofx_memo like irf.wildcard_field
 			)
 	union
 	select t.transaction_id, ir.import_rule_id, ir.priority, ir.start_date, ir.row_creation_date
 	from bank."transaction" t
 		inner join bank.import_rule ir on ir.start_date <= t.processed_date 
 				and ir.end_date >= t.processed_date
+		INNER JOIN bank.import_rule_fields_to_match irf
+			ON ir.import_rule_id = irf.import_rule_id
 	where 
 		t.transaction_id = n_transaction_id
-	    and ir.wildcard_field is null
-		and (t.bank_account_id = ir.bank_account_id or ir.bank_account_id is null)
-		and
-		((t.other_party_bank_account_number = ir.other_party_bank_account_number or ir.other_party_bank_account_number is null)
+	    and irf.wildcard_field is null
+		and (t.bank_account_id = irf.bank_account_id or irf.bank_account_id is null)
 		and (
-				(t.type = ir.type or ir.type is null)
-				and (t.details LIKE ir.details or ir.details is null)
-				and (t.particulars LIKE ir.particulars or ir.particulars is null)
-				and (t.code LIKE ir.code or ir.code is null)
-				and (t.reference LIKE ir.reference or ir.reference is null)
-				and (t.ofx_name LIKE ir.ofx_name or ir.ofx_name is null)
-				and (t.ofx_memo LIKE ir.ofx_memo or ir.ofx_memo is null)
+				(t.type = irf.type or irf.type is null)
+				and (t.details LIKE irf.details or irf.details is null)
+				and (t.particulars LIKE irf.particulars or irf.particulars is null)
+				and (t.code LIKE irf.code or irf.code is null)
+				and (t.reference LIKE irf.reference or irf.reference is null)
+				and (t.ofx_name LIKE irf.ofx_name or irf.ofx_name is null)
+				and (t.ofx_memo LIKE irf.ofx_memo or irf.ofx_memo is null)
 		))
-	)
 	update bank."transaction" as t_to_update
 	set matched_import_rule_id = prioritised_matches.import_rule_id
 	from
@@ -63,7 +64,7 @@ begin
             ROW_NUMBER() OVER(PARTITION BY m.transaction_id
                                  ORDER BY m.priority desc, start_date asc, row_creation_date asc, import_rule_id asc) AS row_num
            FROM matched_rules m)
-	  SELECT pr.transaction_id, pr.import_rule_id, r.account_id, r.other_party_account_id
+	  SELECT pr.transaction_id, pr.import_rule_id
 	  FROM prioritised_rules pr
 	  	inner join bank.import_rule r on pr.import_rule_id = r.import_rule_id
 	  WHERE pr.row_num = 1  -- get the matching rule with the highest priority

@@ -81,7 +81,8 @@ begin
 		credit_amount,
 		memo,
 		bank_account_id,
-		bank_transaction_id)
+		bank_transaction_id,
+		matched_import_rule_id)
 	values ( n_gl_type_id,
 	 d_gl_date,
 	n_gl_grouping_id,
@@ -90,7 +91,8 @@ begin
 	n_credit_amount,
 	s_memo,
 	case when b_bank_account_is_debit = false then n_bank_account_id else null end,
-	n_bank_transaction_id);
+	n_bank_transaction_id,
+    n_matched_import_rule_id);
 	
     IF (n_debit_account_id_2 IS NOT NULL AND n_debit_amount_2 IS NOT NULL)
     THEN
@@ -130,7 +132,8 @@ begin
 			credit_amount,
 			memo,
 			bank_account_id,
-			bank_transaction_id)
+			bank_transaction_id,
+			matched_import_rule_id)
 		values ( n_gl_type_id,
 		 d_gl_date,
 		n_gl_grouping_id,
@@ -139,7 +142,8 @@ begin
 		n_credit_amount_2,
 		s_memo,
 		case when b_bank_account_is_debit = false then n_bank_account_id else null end,
-		n_bank_transaction_id);    
+		n_bank_transaction_id,
+    	n_matched_import_rule_id);    
     END IF;
     
     return 1;
