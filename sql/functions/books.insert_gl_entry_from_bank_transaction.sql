@@ -43,45 +43,36 @@ begin
 		a.account_id
 		from books.account a where description ='uncategorised expense';
 	
-	if (n_import_rule_type_id IN(1,2)) /* Standard */
-	then
-		
-		select 
-			into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
-			n_bank_account_id, b_bank_account_is_debit, n_matched_import_rule_id, s_memo
-			case when t.amount > 0 
-				then COALESCE(ir.account_id, b_g.account_id)
-				else 
-					case when ir.other_party_account_id is null then n_uncategorised_expense_account_id else ir.other_party_account_id end 
-				end,
-			ABS(t.amount),
-			case when t.amount > 0 
-				then case when ir.other_party_account_id is null then n_uncategorised_income_account_id else ir.other_party_account_id end
-				else COALESCE(ir.account_id, b_g.account_id) 
-				end,
-			ABS(t.amount),
-			t.processed_date,
-			t.bank_account_id,
-			case when t.amount > 0 
-			    then true
-			    else false end, -- b_bank_account_is_debit
-			t.matched_import_rule_id,
-			'imported'
-		from bank.transaction t
-			LEFT JOIN bank.import_rule ir ON t.matched_import_rule_id = ir.import_rule_id
-		    left JOIN bank.bank_account_gl_account_link b_g ON t.bank_account_id = b_g.bank_account_id AND b_g.is_default=true
-		where t.transaction_id = n_transaction_id;
 
-	end if;
-	
+	select 
+		into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
+		n_bank_account_id, b_bank_account_is_debit, n_matched_import_rule_id, s_memo
+		coalesce(irg.debit_account_id_1,0),
+		ABS(t.amount),
+		coalesce(irg.credit_account_id_1,0),
+		ABS(t.amount),
+		t.processed_date,
+		t.bank_account_id,
+		case when t.amount > 0 
+		    then true
+		    else false end, -- b_bank_account_is_debit
+		t.matched_import_rule_id,
+		'imported'
+	from bank.transaction t
+		LEFT JOIN bank.import_rule ir ON t.matched_import_rule_id = ir.import_rule_id
+		left JOIN bank.import_rule_gl_matrix irg ON ir.import_rule_id = irg.import_rule_id
+	    left JOIN bank.bank_account_gl_account_link b_g ON t.bank_account_id = b_g.bank_account_id AND b_g.is_default=true
+	where t.transaction_id = n_transaction_id;
+
+
 	perform books.insert_gl_entry_basic(n_gl_type_id:=1::int2, -- JE 
-		n_debit_account_id:=n_debit_account_id::int, 
+		n_debit_account_id:=n_debit_account_id::int4, 
 		n_debit_amount:=n_debit_amount::numeric(16,2), 
-		n_credit_account_id:=n_credit_account_id::int, 
+		n_credit_account_id:=n_credit_account_id::int4, 
 		n_credit_amount:=n_credit_amount::numeric(16,2), 
-		n_debit_account_id_2:=n_debit_account_id_2::int, 
+		n_debit_account_id_2:=n_debit_account_id_2::int4, 
 		n_debit_amount_2:=n_debit_amount_2::numeric(16,2), 
-		n_credit_account_id_2:=n_credit_account_id_2::int, 
+		n_credit_account_id_2:=n_credit_account_id_2::int4, 
 		n_credit_amount_2:=n_credit_amount_2::numeric(16,2), 
 		d_gl_date:=d_gl_date::date, 
 		s_memo:=s_memo::varchar,
