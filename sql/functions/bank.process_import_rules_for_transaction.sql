@@ -71,26 +71,6 @@ begin
 	 )  prioritised_matches
 	 where t_to_update.transaction_id = prioritised_matches.transaction_id;
 	
---	 
---	-- GL transactions where the other party account id does not match the import rules (usually because new rules have been added)
---	update books.general_ledger as gl
---		set account_id = matches.other_party_account_id,
---		matched_import_rule_id = matches.matched_import_rule_id
---		from 
---		(
---		select gl.gl_id, gl.account_id, t.other_party_account_id, t.matched_import_rule_id
---		from books.general_ledger gl 
---		inner join bank."transaction" t on gl.bank_transaction_id = t.transaction_id
---		inner join bank.bank_account_gl_account_link link_account_def 
---			on t.bank_account_id = link_account_def.bank_account_id and link_account_def.is_default = true
---		inner join working.import_rule_matches m 
---			on t.matched_import_rule_id  = m.import_rule_id and t.transaction_id = m.transaction_id
---		where (gl.account_id not in 
---				(select account_id from bank.bank_account_gl_account_link where bank_account_id = t.bank_account_id)) -- get the other side of the transaction
---	) matches
---	where gl.gl_id = matches.gl_id;
-
-	-- GL transactions where the account id does not match the default link account id
 	
 
 END;
