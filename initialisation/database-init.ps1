@@ -52,6 +52,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_loan_interest.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_interest_only_loan_repayment.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_transfer_out.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_transfer_in.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_income.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_expense.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_transfer_out.sql
