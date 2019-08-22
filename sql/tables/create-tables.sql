@@ -109,6 +109,12 @@ insert into bank.import_rule_type (import_rule_type_id, import_rule_type, descri
 	values (6, 'expense', 'An expense from the bank to an expense account with no transaction splits');
 insert into bank.import_rule_type (import_rule_type_id, import_rule_type, description)
 	values (7, 'interest-only-loan-repayment', 'A payment of interest incurred in an interest only loan payables account');
+insert into bank.import_rule_type (import_rule_type_id, import_rule_type, description)
+	values (8, 'bank-transfer-in', 'A bank transfer into a bank accounts');
+insert into bank.import_rule_type (import_rule_type_id, import_rule_type, description)
+	values (9, 'bank-transfer-out', 'A bank transfer out of a bank accounts');
+
+
 
 
 /* most common import_rule fields */

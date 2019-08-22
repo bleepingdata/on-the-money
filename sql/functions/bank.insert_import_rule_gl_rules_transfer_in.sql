@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_transfer_out;
+DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_transfer_in;
 
-create or replace function bank.insert_import_rule_gl_rules_transfer_out
+create or replace function bank.insert_import_rule_gl_rules_transfer_in
 	(s_cash_account varchar(50),
 	s_bank_transfer_account varchar(50),
 	n_priority smallint default 0,
@@ -31,7 +31,7 @@ begin
 		return;
 	end if;
 
-	SELECT bank.insert_import_rule(s_import_rule_type:='bank-transfer-out', n_priority:=n_priority) into n_import_rule_id;
+	SELECT bank.insert_import_rule(s_import_rule_type:='bank-transfer-in', n_priority:=n_priority) into n_import_rule_id;
 
 	if n_import_rule_id is null
 	then 
@@ -54,8 +54,9 @@ begin
 
 	insert into bank.import_rule_gl_matrix (import_rule_id, debit_account_id_1, credit_account_id_1)
 		values (n_import_rule_id, 
-				n_bank_transfer_account_id,
-				n_cash_account_id);
+				n_cash_account_id,
+				n_bank_transfer_account_id
+				);
 			
 	return;
 end;

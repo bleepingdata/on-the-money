@@ -12,6 +12,7 @@ drop function bank.insert_import_rule_gl_rules_interest_only_loan_repayment;
 drop function bank.insert_import_rule_gl_rules_income;
 drop function bank.insert_import_rule_gl_rules_expense;
 drop function bank.insert_import_rule_gl_rules_transfer_out;
+drop function bank.insert_import_rule_gl_rules_transfer_in;
 drop function bank.insert_import_rule_ofx;
 drop function bank.insert_import_rule_wildcard;
 drop function bank.insert_import_rule_type_only;
