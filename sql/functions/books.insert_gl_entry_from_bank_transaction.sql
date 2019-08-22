@@ -20,8 +20,6 @@ s_memo varchar(256);
 n_bank_account_id int4;
 b_bank_account_is_debit boolean;
 n_matched_import_rule_id int4;
-n_uncategorised_income_account_id int;
-n_uncategorised_expense_account_id int;
 begin
 
 	select into n_import_rule_type_id
@@ -30,19 +28,12 @@ begin
 			left join bank.import_rule ir on t.matched_import_rule_id = ir.import_rule_id
 		where t.transaction_id=n_transaction_id;
 	
+	delete from books.general_ledger where bank_transaction_id = n_transaction_id;
+
 	if (n_import_rule_type_id is null)
 	then
 		n_import_rule_type_id = 1; /* Standard */
 	end if;
-
-	select into n_uncategorised_income_account_id
-		a.account_id
-		from books.account a where description ='uncategorised income';
-	
-	select into n_uncategorised_expense_account_id
-		a.account_id
-		from books.account a where description ='uncategorised expense';
-	
 
 	select 
 		into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
