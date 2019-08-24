@@ -62,9 +62,9 @@ bank_account_id int null references bank.account(bank_account_id)
 insert into books.account (account_id, account_type_id, account_code, description, open_date, close_date, bank_account_id)
 	values (0, 0, '0', 'unknown account', '1900-01-01', '2099-12-31', NULL);
 insert into books.account (account_type_id, account_code, description, open_date, close_date, bank_account_id)
-	values (4, '40000', 'uncategorised income', '1900-01-01', '2099-12-31', NULL);
+	values (0, '00001', 'uncategorised debit', '1900-01-01', '2099-12-31', NULL);
 insert into books.account (account_type_id, account_code, description, open_date, close_date, bank_account_id)
-	values (5, '50000', 'uncategorised expense', '1900-01-01', '2099-12-31', NULL);
+	values (0, '00002', 'uncategorised credit', '1900-01-01', '2099-12-31', NULL);
 
 
 create table bank.account_debt_type
