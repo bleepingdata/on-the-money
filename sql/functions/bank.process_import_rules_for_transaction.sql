@@ -51,7 +51,10 @@ begin
 				and (t.reference LIKE irf.reference or irf.reference is null)
 				and (t.ofx_name LIKE irf.ofx_name or irf.ofx_name is null)
 				and (t.ofx_memo LIKE irf.ofx_memo or irf.ofx_memo is null)
-		))
+		)
+	union
+	select n_transaction_id as transaction_id, 0 as import_rule_id, -32767 as priority, '1900-01-01' as start_date, '1900-01-01' as row_creation_date
+	)
 	update bank."transaction" as t_to_update
 	set matched_import_rule_id = prioritised_matches.import_rule_id
 	from

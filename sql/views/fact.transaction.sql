@@ -1,3 +1,5 @@
+drop view if exists fact."transaction";
+
 CREATE OR REPLACE VIEW fact."transaction"
 AS SELECT t.transaction_id,
     t.bank_account_friendly_name,
@@ -7,10 +9,13 @@ AS SELECT t.transaction_id,
     t.balance,
     t.transaction_date,
     t.processed_date,
-    t.type,
     t.other_party_bank_account_number,
-    t.reference,
-    t.code,
+    t.type,
+    t.details,
     t.particulars,
-    t.details
+    t.code,
+    t.reference,
+    t.ofx_name,
+    t.ofx_memo,
+    t.matched_import_rule_id
    FROM bank.transaction t;

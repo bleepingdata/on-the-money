@@ -38,9 +38,9 @@ begin
 	select 
 		into n_debit_account_id, n_debit_amount, n_credit_account_id, n_credit_amount, d_gl_date, 
 		n_bank_account_id, b_bank_account_is_debit, n_matched_import_rule_id, s_memo
-		coalesce(irg.debit_account_id_1,0),
+		coalesce(irg.debit_account_id_1,(select account_id from books.account where description='uncategorised debit')),
 		ABS(t.amount),
-		coalesce(irg.credit_account_id_1,0),
+		coalesce(irg.credit_account_id_1,(select account_id from books.account where description='uncategorised credit')),
 		ABS(t.amount),
 		t.processed_date,
 		t.bank_account_id,
