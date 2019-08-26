@@ -10,7 +10,6 @@ begin
 	-- The only field that is matched is the wildcard field and start / end dates of rule. 
 	-- The wildcard field is matched to any of details, particulars, code, referenece, ofx_name or ofx_memo.
 
---	insert into working.import_rule_matches (transaction_id, import_rule_id, rule_priority, rule_start_date, rule_row_creation_date, account_id, account_id_2, other_party_account_id, other_party_account_id_2, amount)
 	with matched_rules as
 	(
 	select t.transaction_id, ir.import_rule_id, ir.priority, ir.start_date, ir.row_creation_date
@@ -22,6 +21,7 @@ begin
 			ON ir.import_rule_id = irf.import_rule_id
 	where 
 	    t.transaction_id = n_transaction_id
+	    and (irf.is_deposit is null or (irf.is_deposit is true and t.amount > 0 or irf.is_deposit is false and t.amount < 0))
 	    and irf.wildcard_field is not null 
 		and 
 			(
@@ -41,6 +41,7 @@ begin
 			ON ir.import_rule_id = irf.import_rule_id
 	where 
 		t.transaction_id = n_transaction_id
+	    and (irf.is_deposit is null or (irf.is_deposit is true and t.amount > 0 or irf.is_deposit is false and t.amount < 0))
 	    and irf.wildcard_field is null
 		and (t.bank_account_id = irf.bank_account_id or irf.bank_account_id is null)
 		and (
