@@ -11,6 +11,7 @@ with monthly_summary as
 	gl.credit_amount
 from
 	books.general_ledger gl
+	where bank_account_id is not null
 union all select
 	a.bank_account_id,
 	d.month_year_date as gl_date,
