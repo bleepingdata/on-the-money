@@ -5,6 +5,7 @@ create or replace function bank.insert_import_rule_gl_rules_transfer_in
 	s_bank_transfer_account varchar(50),
 	n_priority smallint default 0,
 	s_bank_account varchar(50) default null,
+	b_is_deposit boolean default true,
 	s_type varchar(50) default null,
 	s_other_party_bank_account_number varchar(56) default null,
 	s_details varchar(50) default null,
@@ -42,6 +43,7 @@ begin
 	perform bank.insert_import_rule_fields_to_match(
 		n_import_rule_id:=n_import_rule_id, 
 		s_bank_account:=s_bank_account,
+		b_is_deposit:=b_is_deposit,
 		s_type:=s_type, 
 		s_other_party_bank_account_number:=s_other_party_bank_account_number, 
 		s_details:=s_details, 
