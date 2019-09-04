@@ -28,6 +28,8 @@ drop function books.insert_gl_from_bank_import;
 drop function books.insert_journal_entry_basic;
 drop function books.last_day;
 drop function books.get_bank_account_id;
+drop function books.process_month_end_mortgage;
+
 drop function fact.populate_account_summary_by_month;
 
 drop function load.prepare_anz_excel;
