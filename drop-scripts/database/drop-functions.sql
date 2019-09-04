@@ -18,7 +18,7 @@ drop function bank.insert_import_rule_wildcard;
 drop function bank.insert_import_rule_type_only;
 drop function bank.process_import_rules_for_transaction;
 drop function bank.process_import_rules_from_bank_import;
-
+drop function bank.purge_bank_import_from_everywhere;
 
 drop function books.delete_gl_entries_for_account;
 drop function books.get_account_balance_at_date;
