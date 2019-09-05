@@ -255,8 +255,7 @@ bank_transaction_id int8 null references bank.transaction(transaction_id),  -- o
 matched_import_rule_id int4 null references bank.import_rule(import_rule_id) -- optional. the import rule applied to this tx
 );
 
--- drop table fact.account_summary_by_month
-create table fact.account_summary_by_month
+create table fact_tbl.account_summary_by_month
 (
 account_id int not null,
 year int not null,

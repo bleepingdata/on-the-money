@@ -1,13 +1,13 @@
 drop
-	function if exists fact.populate_account_summary_by_month;
+	function if exists fact_tbl.populate_account_summary_by_month;
 
  create
 or replace
-function fact.populate_account_summary_by_month() returns void as $$ 
+function fact_tbl.populate_account_summary_by_month() returns void as $$ 
 begin 
 	
 	truncate table
-		fact.account_summary_by_month;
+		fact_tbl.account_summary_by_month;
 	
 with monthly_summary as 
 (
@@ -46,7 +46,7 @@ group by a.account_id, d.month_year_date
 )
  insert
 	into
-		fact.account_summary_by_month ( account_id, year, month_number, month_end_date, debit_amount, credit_amount, debit_amount_running_total, credit_amount_running_total, balance ) 
+		fact_tbl.account_summary_by_month ( account_id, year, month_number, month_end_date, debit_amount, credit_amount, debit_amount_running_total, credit_amount_running_total, balance ) 
 		select
 			transactions.account_id,
 			transactions.year,

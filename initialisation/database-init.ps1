@@ -28,6 +28,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.account.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.account_type.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.months.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.bank_account.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_balance.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_movement.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.transaction.sql
@@ -36,7 +37,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_transfers.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.cash_balance.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_account_balance.sql
-psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.bank_account.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_summary_by_month.sql
 
 
 #functions
@@ -73,7 +74,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_bank_account_id.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.process_month_end_mortgage.sql
 
-psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\fact.populate_account_summary_by_month.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\fact_tbl.populate_account_summary_by_month.sql
 
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\load.prepare_anz_excel.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\load.prepare_anz_mortgage_excel.sql
