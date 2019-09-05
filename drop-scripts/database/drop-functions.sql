@@ -30,7 +30,7 @@ drop function books.last_day;
 drop function books.get_bank_account_id;
 drop function books.process_month_end_mortgage;
 
-drop function fact.populate_account_summary_by_month;
+drop function fact_tbl.populate_account_summary_by_month;
 
 drop function load.prepare_anz_excel;
 drop function load.prepare_anz_mortgage_excel;

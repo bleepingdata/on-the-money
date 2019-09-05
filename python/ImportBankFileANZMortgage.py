@@ -93,10 +93,11 @@ row = cur.fetchone()
 n_import_identifier=row[0]
 
 conn.commit()
-
 cur.execute("select bank.process_import_rules_from_bank_import (%s)", (n_import_identifier,))
-
+conn.commit()
 cur.execute("select books.insert_gl_from_bank_import (%s)", (n_import_identifier,))
+conn.commit()
+cur.execute("select fact_tbl.populate_account_summary_by_month()")
 
 # close the communication with the PostgreSQL database server
 cur.close()

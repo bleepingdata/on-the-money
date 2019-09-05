@@ -1,5 +1,5 @@
 
-drop table fact.account_summary_by_month;
+drop table fact_tbl.account_summary_by_month;
 
 drop table books.general_ledger;
 
@@ -31,5 +31,6 @@ drop schema bank;
 drop schema books;
 drop schema dimension;
 drop schema fact;
+drop schema fact_tbl;
 drop schema load;
 
