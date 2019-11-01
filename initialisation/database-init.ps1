@@ -29,6 +29,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.account_type.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.months.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\dimension.bank_account.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_summary_by_month.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_balance.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_movement.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.transaction.sql
@@ -37,7 +38,6 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_transfers.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.cash_balance.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.bank_account_balance.sql
-psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\views\fact.account_summary_by_month.sql
 
 
 #functions
@@ -80,3 +80,9 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\load.prepare_anz_mortgage_excel.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\load.prepare_ofx.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\load.insert_ofx_transaction.sql
+
+# default accounts
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\default-data\otm-default-accounts.sql
+
+# common rules
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\default-data\otm-default-rules.sql
