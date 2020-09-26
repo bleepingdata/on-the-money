@@ -13,6 +13,8 @@ INSERT into books.account(account_type_id, account_code, description, open_date,
 	 VALUES (3 /* Equity */, '30001', 'Opening Balance Equity', '2017-01-01', '2099-12-31');
 INSERT into books.account(account_type_id, account_code, description, open_date, close_date)
 	 VALUES (3 /* Equity */, '30002', 'Bank Transfers', '2017-01-01', '2099-12-31');
+INSERT into books.account(account_type_id, account_code, description, open_date, close_date)
+	 VALUES (3 /* Equity */, '30003', 'Revaluation Surplus', '2017-01-01', '2099-12-31');
 
 -- Income Accounts
 INSERT into books.account(account_type_id, account_code, description, open_date, close_date)
