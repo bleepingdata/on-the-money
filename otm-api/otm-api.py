@@ -3,12 +3,31 @@
 import json
 from flask import Flask, request, jsonify
 
+#from otm-populate-account-summary-by-month.py import populate_account_summary
+
+# # connection string file added to git ignore
+# The file defines s_databasename, s_username, s_password, s_host, n_port
+#from file connection_strings import connection_strings
+s_databasename = 'otm-hill-ranger'
+s_username = 'otmadmin'
+s_password = 'lilian99'
+s_host = 'localhost'
+n_port = 5432
+
+#conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
+
 app = Flask(__name__)
 
-@app.route('/summary/', methods=['GET'])
-def get_summary():
-    return jsonify({'summary': 'todo'})
-    
+# @app.route('/summary/', methods=['GET'])
+# def get_summary():
+#  #   populate_account_summary (conn)
+#     return jsonify({'summary': 'todo'})
+
+# @app.route('/summary/populate', methods=['POST'])
+# def get_summary():
+#     #python ..\..\on-the-money\otm-api\otm-populate-account-summary-by-month.py -db $dbname -u $username -p $password -host $hostname -port $port
+#     return jsonify({'summary': 'todo'})
+
 @app.route('/', methods=['GET'])
 def query_records():
     name = request.args.get('name')
@@ -49,7 +68,7 @@ def update_record():
     with open('./tmp/data.txt', 'w') as f:
         f.write(json.dumps(new_records, indent=2))
     return jsonify(request_record)
-    
+
 @app.route('/', methods=['DELETE'])
 def delte_record():
     record = json.loads(request.data)
