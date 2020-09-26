@@ -5,16 +5,13 @@ from flask import Flask, request, jsonify
 
 import otm_summary
 
+import connection_strings
 import psycopg2
 
 # # connection string file added to git ignore
 # The file defines s_databasename, s_username, s_password, s_host, n_port
 #from file connection_strings import connection_strings
-s_databasename = 'onthemoney'
-s_username = 'postgres'
-s_password = 'lilian99'
-s_host = 'localhost'
-n_port = 5432
+from connection_strings import *
 
 try:
     conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
@@ -22,11 +19,6 @@ except (Exception, psycopg2.Error) as error :
     print ("Error while connecting to PostgreSQL", error)
 
 app = Flask(__name__)
-
-# @app.route('/summary/', methods=['GET'])
-# def get_summary():
-#  #   populate_account_summary (conn)
-#     return jsonify({'summary': 'todo'})
 
 @app.route('/summary/populate', methods=['PUT'])
 def get_summary():
