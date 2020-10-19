@@ -13,14 +13,14 @@ Param([Parameter(Mandatory=$false)]
 # database
 # psql --host=$hostname --port=$port --username=$username -f ..\..\on-the-money\sql\database\create-database.sql
 
-# schema
+# views
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-views.sql
 
-# tables
+# functions
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-functions.sql
 
 # sequences
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-other-objects.sql
 
-# views
+# tables and schema
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f .\database\drop-tables-and-schema.sql
