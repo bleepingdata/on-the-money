@@ -31,9 +31,11 @@ select
 	nextval('bank.import_identifier') into
 		n_import_identifier;
 
+-- remove any existing bank transactions, based on transaction and processed_dates matching in the imported data
 with distinct_loaded_dates as (
 select
-	cast( a."Transaction Date" as date ) as transaction_date
+	cast( a."Transaction Date" as date ) as transaction_date,
+	cast( a."Processed Date" as date ) as processed_date
 from
 	load.anz_excel a ) delete
 from
@@ -41,6 +43,7 @@ from
 		using distinct_loaded_dates
 		where
 			distinct_loaded_dates.transaction_date = t.transaction_date
+			and distinct_loaded_dates.processed_date = t.processed_date
 			and t.bank_account_id = n_bank_account_id;
 
 -- add to staging tables
