@@ -10,7 +10,7 @@ select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_exp
 select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_expense_account :='Other Expense', s_type := 'Direct Debit', n_priority:=-32766::int2);
 select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_expense_account :='Other Expense', s_type := 'Foreign Exchange', n_priority:=-32766::int2);
 -- common OFX types
-select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_expense_account :='Other Expense', s_type := 'CREDIT', n_priority:=-32766::int2);
+select bank.insert_import_rule_gl_rules_income (s_cash_account := 'Cash', s_income_account :='Other Income', s_type := 'CREDIT', n_priority:=-32766::int2);
 select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_expense_account :='Other Expense', s_type := 'DEBIT', n_priority:=-32766::int2);
 select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_expense_account :='Other Expense', s_type := 'ATM', n_priority:=-32766::int2);
 select bank.insert_import_rule_gl_rules_expense (s_cash_account := 'Cash', s_expense_account :='Other Expense', s_type := 'PAYMENT', n_priority:=-32766::int2);

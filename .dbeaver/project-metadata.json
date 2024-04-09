@@ -1,0 +1,1 @@
+{"resources":{"sql/default-data/otm-default-rules.sql":{"default-datasource":"postgres-jdbc-18eb5ab01d1-e6156e961d6b327","default-catalog":"onthemoney","default-schema":"public"},"sql/functions/load.prepare_anz_mortgage_excel.sql":{"default-datasource":"postgres-jdbc-18eb5ab01d1-e6156e961d6b327","default-catalog":"onthemoney","default-schema":"public"}}}

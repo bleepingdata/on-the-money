@@ -17,5 +17,9 @@ AS SELECT t.transaction_id,
     t.reference,
     t.ofx_name,
     t.ofx_memo,
-    t.matched_import_rule_id
-   FROM bank.transaction t;
+    t.matched_import_rule_id,
+    row_to_json(irfm) "import_rules_fields"
+   FROM bank.transaction t
+      left join bank.import_rule ir on t.matched_import_rule_id = ir.import_rule_id
+      left join bank.import_rule_gl_matrix irgm on ir.import_rule_id = irgm.import_rule_id
+      left join bank.import_rule_fields_to_match irfm on t.matched_import_rule_id = irfm.import_rule_id;
