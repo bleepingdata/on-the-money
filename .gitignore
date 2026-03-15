@@ -1,0 +1,55 @@
+.dbeaver/
+### --- Data & Statements (The most critical for privacy) ---
+# Exclude all raw bank statement formats
+*.ofx
+*.qif
+*.csv
+*.xlsx
+*.xls
+*.pdf
+
+# Exclude temporary data directories and text dumps
+tmp/
+temp/
+data/
+*.txt
+*.log
+
+### --- Power BI ---
+# Power BI files store a compressed cache of all imported data
+*.pbix
+*.pbit
+
+### --- Credentials & Configuration ---
+# Exclude specific files containing connection strings
+connection_strings.py
+config.py
+secrets.json
+
+# Exclude environment variables
+.env
+
+### --- Python Environment ---
+# Compiled python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+### --- IDEs & System Files ---
+# Exclude local VSCode settings which may contain absolute paths
+.vscode/
+!.vscode/extensions.json
+
+# System specific files
+.DS_Store
+Thumbs.db
+
+### --- SQL ---
+# If you use local SQL export files for backups
+*.sql.gz
+*.bak
