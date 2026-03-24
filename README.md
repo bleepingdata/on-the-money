@@ -73,6 +73,15 @@ python otm-api/otm-api.py
 Endpoints:
 - `PUT /summary/populate`: Triggers the `populate_account_summary_by_month` stored procedure.
 
+## Testing
+
+Integration tests are located in the `test/` directory.
+
+To run the API integration tests (PowerShell):
+```powershell
+./test/test-api.ps1
+```
+
 ## Project Status
 
 The project is pre-alpha.
