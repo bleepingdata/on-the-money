@@ -1,3 +1,11 @@
+"""
+Script: ImportBankFileANZ.py
+Purpose: Imports ANZ Bank transaction data from an Excel file into the PostgreSQL database.
+Process:
+    1. Truncates the staging table via a stored procedure.
+    2. Loads Excel data into a Pandas DataFrame and inserts it into the staging table using SQLAlchemy.
+    3. Calls stored procedures to process transactions, apply rules, and update the General Ledger.
+"""
 import pandas as pd
 import psycopg2
 import sqlalchemy as sa
@@ -10,6 +18,9 @@ from argparse import ArgumentParser
 
 print ("File Import started")
 
+# ---------------------------------------------------------
+# 1. COMMAND LINE ARGUMENT PARSING
+# ---------------------------------------------------------
 parser = ArgumentParser()
 parser.add_argument("-f", "--file", dest="bankexcelfile", required=True,
                     help="the file name of the ANZ excel file to import", metavar="FILE")
@@ -44,7 +55,9 @@ b_removeoverlappingtransactions = True
  
 print ("File is %s" %(s_bankexcelfile))
 
- # Connect to DB
+# ---------------------------------------------------------
+# 2. PREPARE STAGING ENVIRONMENT
+# ---------------------------------------------------------
 print ("Connecting to DB for Prepare")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 
@@ -56,7 +69,9 @@ conn.commit()
 conn.close()
 print ("Committed and closed")
 
-# Check file exists
+# ---------------------------------------------------------
+# 3. LOAD FILE AND INSERT TO STAGING
+# ---------------------------------------------------------
 try:
     with open(args.bankexcelfile) as file:
         pass
@@ -65,7 +80,7 @@ except IOError as e:
     raise
 
 
-# Create the SQLconnection object (postgresql://username:password@host:port/database)
+# Create the SQLAlchemy connection object (required for pandas to_sql)
 s_alchemy_connection = "postgresql://{}:{}@{}:{}/{}".format(s_username, s_password, s_host, n_port, s_databasename)
 engine = create_engine(s_alchemy_connection)
 
@@ -78,13 +93,15 @@ dfTransactions['bank_account_friendly_name'] = s_bank_account_friendly_name
 
 print ("Complete")
 
-# # Load a sheet from the spreadsheet into a DataFrame. For ANZ, the sheet we need is named "Transactions"
-
+# Insert the DataFrame into the 'anz_excel' table in the 'load' schema.
+# if_exists='append' is used because we truncated the table in the preparation step.
 print ("Inserting data frame into load table")
 dfTransactions.to_sql(name='anz_excel', if_exists='append',con=engine, schema='load', index=False, chunksize=1)
 print ("Complete")
 
-# # Process the file
+# ---------------------------------------------------------
+# 4. PROCESS TRANSACTIONS (STORED PROCEDURES)
+# ---------------------------------------------------------
 print ("Connecting to DB for processing")
 conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 cur = conn.cursor()

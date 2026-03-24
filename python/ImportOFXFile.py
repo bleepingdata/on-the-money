@@ -1,3 +1,11 @@
+"""
+Script: ImportOFXFile.py
+Purpose: Imports OFX (Open Financial Exchange) files into the PostgreSQL database.
+Process:
+    1. Parses the OFX file using ofxparse (with a regex pre-processor to fix common formatting errors).
+    2. Inserts raw transactions into a staging table.
+    3. Calls stored procedures to migrate staged data to the main transaction table and apply accounting rules.
+"""
 import io
 import re
 import warnings
@@ -119,6 +127,7 @@ for tx in txs:
     dt_dtposted = tx.date.date()
     
     # Execute the insert function, mapping ofxparse properties to the expected arguments
+    # Note: Mapping .type -> type, .amount -> amount, .id -> fitid, .payee -> name
     cur.execute("select load.insert_ofx_transaction(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", 
         (n_bank_account_id,
         datetime.datetime.now().date(),

@@ -14,10 +14,13 @@ begin
 	from
 		bank.account a
 	where
+		-- Match on account number if provided
 		a.external_unique_identifier = coalesce( rtrim(s_bank_account_number),
 		a.external_unique_identifier )
+		-- Match on friendly name if provided
 		and a.external_friendly_name = coalesce( rtrim(s_bank_account_friendly_name),
 		a.external_friendly_name )
+		-- Ensure at least one search parameter was passed
 		and ( s_bank_account_number is not null
 		or s_bank_account_friendly_name is not null );
 

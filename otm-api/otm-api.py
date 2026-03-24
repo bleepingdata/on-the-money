@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
+"""
+Script: otm-api.py
+Purpose: A basic Flask API to trigger database summary calculations and potentially serve data.
+"""
 import json
 from flask import Flask, request, jsonify
 
@@ -8,11 +12,12 @@ import otm_summary
 import connection_strings
 import psycopg2
 
-# # connection string file added to git ignore
-# The file defines s_databasename, s_username, s_password, s_host, n_port
-#from file connection_strings import connection_strings
+# Import configuration variables.
+# 'connection_strings.py' is expected to define s_databasename, s_username, s_password, s_host, n_port.
+# This file is typically git-ignored to protect credentials.
 from connection_strings import *
 
+# Establish the database connection globally for the app usage
 try:
     conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
 except (Exception, psycopg2.Error) as error :
@@ -20,6 +25,9 @@ except (Exception, psycopg2.Error) as error :
 
 app = Flask(__name__)
 
+# ---------------------------------------------------------
+# ROUTES
+# ---------------------------------------------------------
 @app.route('/summary/populate', methods=['PUT'])
 def get_summary():
     otm_summary.populate_account_summary_by_month (conn)
