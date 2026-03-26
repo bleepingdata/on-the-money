@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On The Money - Manager</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; text-align: center; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { margin-top: 20px; font-weight: bold; font-size: 1.2rem; }
+        .success { color: green; }
+        .error { color: red; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 600px; margin: 0 auto; text-align: left; }
+        .form-grid label { display: flex; flex-direction: column; font-size: 0.9rem; font-weight: bold; }
+        .form-grid input { padding: 5px; font-size: 14px; margin-top: 2px; }
+        .full-width { grid-column: span 2; text-align: center; margin-top: 15px; }
+        .form-grid select { padding: 5px; font-size: 14px; margin-top: 2px; }
+    </style>
+</head>
+<body>
+    <h1>Account Summary Manager</h1>
+    <button id="btnPopulate">Run Monthly Population</button>
+    <div id="status"></div>
+    
+    <hr style="margin: 2rem 0;">
+
+    <h2>Add Expense Rule</h2>
+    <div class="form-grid">
+        <label>Expense Account (Req)
+            <select id="s_expense_account">
+                <option value="">Loading...</option>
+            </select>
+        </label>
+        <label>Cash Account (Req)
+            <select id="s_cash_account">
+                <option value="">Loading...</option>
+            </select>
+        </label>
+        
+        <label>Priority<input type="number" id="n_priority" value="0"></label>
+        <label style="flex-direction: row; align-items: center; gap: 10px;">Is Deposit <input type="checkbox" id="b_is_deposit"></label>
+
+        <label>Bank Account
+            <select id="s_bank_account">
+                <option value="">(Any)</option>
+            </select>
+        </label>
+        <label>Type<input type="text" id="s_type"></label>
+        <label>Other Party Acct<input type="text" id="s_other_party_bank_account_number"></label>
+        <label>Details<input type="text" id="s_details"></label>
+        <label>Particulars<input type="text" id="s_particulars"></label>
+        <label>Code<input type="text" id="s_code"></label>
+        <label>Reference<input type="text" id="s_reference"></label>
+        <label>OFX Name<input type="text" id="s_ofx_name"></label>
+        <label>OFX Memo<input type="text" id="s_ofx_memo"></label>
+        <label>Wildcard Field<input type="text" id="s_wildcard_field"></label>
+
+        <div class="full-width">
+            <button id="btnSaveRule">Save Rule</button>
+            <div id="ruleStatus" style="font-weight: bold; margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function loadBooksDropdown(elementId, type) {
+            const el = document.getElementById(elementId);
+            try {
+                const response = await fetch(`/accounts/books?account_type=${type}`);
+                if (response.ok) {
+                    const accounts = await response.json();
+                    el.innerHTML = '<option value="">-- Select Account --</option>';
+                    accounts.forEach(acc => {
+                        const option = document.createElement('option');
+                        // The stored procedure currently expects the description name string
+                        option.value = acc.description;
+                        option.textContent = `${acc.description}`;
+                        el.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                el.innerHTML = '<option value="">Error</option>';
+            }
+        }
+
+        async function loadBankDropdown() {
+            const el = document.getElementById('s_bank_account');
+            try {
+                const response = await fetch('/accounts/bank');
+                if (response.ok) {
+                    const accounts = await response.json();
+                    accounts.forEach(acc => {
+                        const option = document.createElement('option');
+                        option.value = acc;
+                        option.textContent = acc;
+                        el.appendChild(option);
+                    });
+                }
+            } catch (err) { console.error('Error loading bank accounts', err); }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBooksDropdown('s_expense_account', 'expense');
+            loadBooksDropdown('s_cash_account', 'asset');
+            loadBankDropdown();
+        });
+
+        document.getElementById('btnPopulate').addEventListener('click', async function() {
+            const btn = this;
+            const statusDiv = document.getElementById('status');
+            
+            btn.disabled = true;
+            statusDiv.textContent = 'Processing...';
+            statusDiv.className = '';
+
+            try {
+                const response = await fetch('/summary/populate', { method: 'PUT' });
+                const text = await response.text();
+                statusDiv.textContent = response.ok ? text : 'Error: ' + text;
+                statusDiv.className = response.ok ? 'success' : 'error';
+            } catch (err) {
+                statusDiv.textContent = 'Network Error: ' + err.message;
+                statusDiv.className = 'error';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('btnSaveRule').addEventListener('click', async function() {
+            const btn = this;
+            const statusDiv = document.getElementById('ruleStatus');
+            
+            // Gather form data
+            const payload = {
+                s_expense_account: document.getElementById('s_expense_account').value,
+                s_cash_account: document.getElementById('s_cash_account').value,
+                n_priority: parseInt(document.getElementById('n_priority').value) || 0,
+                s_bank_account: document.getElementById('s_bank_account').value,
+                b_is_deposit: document.getElementById('b_is_deposit').checked,
+                s_type: document.getElementById('s_type').value,
+                s_other_party_bank_account_number: document.getElementById('s_other_party_bank_account_number').value,
+                s_details: document.getElementById('s_details').value,
+                s_particulars: document.getElementById('s_particulars').value,
+                s_code: document.getElementById('s_code').value,
+                s_reference: document.getElementById('s_reference').value,
+                s_ofx_name: document.getElementById('s_ofx_name').value,
+                s_ofx_memo: document.getElementById('s_ofx_memo').value,
+                s_wildcard_field: document.getElementById('s_wildcard_field').value
+            };
+
+            if (!payload.s_expense_account || !payload.s_cash_account) {
+                statusDiv.textContent = 'Please enter both fields.';
+                statusDiv.className = 'error';
+                return;
+            }
+            
+            btn.disabled = true;
+            statusDiv.textContent = 'Saving...';
+            statusDiv.className = '';
+
+            try {
+                const response = await fetch('/rules/expense', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                statusDiv.textContent = response.ok ? data.message : 'Error: ' + data.error;
+                statusDiv.className = response.ok ? 'success' : 'error';
+            } catch (err) {
+                statusDiv.textContent = 'Network Error: ' + err.message;
+                statusDiv.className = 'error';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
