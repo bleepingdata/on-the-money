@@ -69,6 +69,22 @@ If you do not use the init script, make sure you apply the SQL under these folde
 6. `sql/functions/`
 7. `sql/default-data/`
 
+### Database Reset for Testing
+
+To reset the test database by dropping all objects and starting fresh:
+
+```powershell
+./drop-scripts/otm-drop-all-db-objects.ps1
+```
+
+This script drops all database objects in the correct dependency order:
+1. All views (via `drop-views.sql`)
+2. All functions (via `drop-functions.sql`)
+3. All sequences (via `drop-other-objects.sql`)
+4. All tables and schemas (via `drop-tables-and-schema.sql`)
+
+After dropping objects, you can re-initialize the database using the setup process described above.
+
 ### API configuration
 
 If you plan to use the Flask API, create a local `connection_strings.py` file for [otm-api/otm-api.py](otm-api/otm-api.py). That module is expected to define:

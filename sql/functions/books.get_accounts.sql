@@ -5,19 +5,16 @@ returns table (
     account_id int,
     account_code char(10),
     description varchar(50)
-) as $$
+)
+as $$
 begin
     return query
-    select
-        a.account_id,
+    select a.account_id,
         a.account_code,
         a.description
-    from
-        books.account a
+    from books.account a
         inner join books.account_type at on a.account_type_id = at.account_type_id
-    where
-        (s_account_type is null or at.account_type = s_account_type)
-    order by
-        a.account_code;
+    where (s_account_type is null or at.account_type = s_account_type)
+    order by a.account_code;
 end;
 $$ language plpgsql;

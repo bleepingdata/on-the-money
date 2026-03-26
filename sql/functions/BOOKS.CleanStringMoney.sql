@@ -1,26 +1,18 @@
-CREATE OR replace FUNCTION BOOKS.CleanStringMoney(MoneyAsString VARCHAR(50))
-RETURNS MONEY as $$
-declare amount money;
-BEGIN
-DECLARE WorkingString VARCHAR(50);
+drop function if exists books.cleanstringmoney;
 
-SELECT RTRIM($1) into WorkingString;
---SET WorkingString = REPLACE(WorkingString, '$', '');
---SET WorkingString = REPLACE(WorkingString, ' ', '');
+create or replace function books.cleanstringmoney(moneyasstring varchar(50))
+returns money
+as $$
+declare
+    amount money;
+    workingstring varchar(50);
+begin
+    select rtrim($1) into workingstring;
+    -- set workingstring = replace(workingstring, '$', '');
+    -- set workingstring = replace(workingstring, ' ', '');
 
---SELECT CAST(WorkingString as MONEY) into amount;
+    -- select cast(workingstring as money) into amount;
 
-return amount;
-END;
-$$ LANGUAGE plpgsql;
-
-
-
-CREATE OR replace FUNCTION BOOKS.CleanStringMoney(MoneyAsString VARCHAR(50))
-RETURNS MONEY as $$
-declare amount money;
-BEGIN
-DECLARE WorkingString VARCHAR(50);
-return amount;
-END;
-$$ LANGUAGE plpgsql;
+    return amount;
+end;
+$$ language plpgsql;

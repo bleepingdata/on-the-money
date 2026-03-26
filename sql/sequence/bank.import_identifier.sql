@@ -1,6 +1,6 @@
-CREATE sequence bank.import_identifier
-  START WITH 1
-  INCREMENT BY 1
-  MINVALUE 1
-  NO MAXVALUE
-  CACHE 1;
+create sequence if not exists bank.import_identifier
+    start with 1
+    increment by 1
+    minvalue 1
+    no maxvalue
+    cache 1;

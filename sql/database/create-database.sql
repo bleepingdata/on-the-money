@@ -1,2 +1,2 @@
 
-CREATE DATABASE onthemoney;
+create database onthemoney;
