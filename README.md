@@ -6,8 +6,8 @@ A home accounting database for personal banking analysis. Designed for use with 
 
 - **Data Import**: Python scripts to import banking files (Excel, OFX) into a PostgreSQL database.
 - **Categorization**: Automated rule-based categorization of transactions.
-- **Reporting**: Summary views for reporting and visualization (monthly summaries).
-- **API**: Basic Flask API for triggering summaries.
+- **Reporting**: Summary tables and views for month-based reporting.
+- **API**: A small Flask API for summary generation and account/rule endpoints.
 
 ## Supported Formats
 
@@ -18,66 +18,119 @@ A home accounting database for personal banking analysis. Designed for use with 
 
 - **Python**: 3.6+
 - **PostgreSQL**: 10.4+
-- **Python Packages**:
-    - `pandas`
-    - `psycopg2`
-    - `sqlalchemy`
-    - `ofxparse`
-    - `flask`
-    - `argparse`
+- **PowerShell**: Required for the repository setup and test scripts on Windows.
+- **Python packages**:
+  - `pandas`
+  - `psycopg2`
+  - `sqlalchemy`
+  - `ofxparse`
+  - `flask`
+  - `argparse`
 
 ## Setup
 
-1. **Database Initialization**:
-   - Create a PostgreSQL database (e.g., `onthemoney`).
-   - Run the SQL scripts located in `sql/tables/` to create the schema and tables.
-   - Run the SQL scripts in `sql/functions/` to create the stored procedures.
+### Preferred database bootstrap
 
-2. **Configuration**:
-   - Ensure you have a `connection_strings.py` file for the API if you plan to use it (see `otm-api/otm-api.py`).
+Use [initialisation/database-init.ps1](initialisation/database-init.ps1) as the primary setup entry point. It applies the repository SQL in the expected order:
+
+1. Database creation
+2. Schema creation
+3. Table creation
+4. Sequence creation
+5. View creation
+6. Function creation
+7. Default account data
+8. Default import rules
+
+The script accepts these optional parameters:
+
+- `-hostname` default `localhost`
+- `-port` default `5432`
+- `-username` default `postgres`
+- `-dbname` default `onthemoney`
+
+The script expects PostgreSQL credentials to be available via `pgpass.conf`, as noted in [initialisation/database-init.ps1](initialisation/database-init.ps1).
+
+Example:
+
+```powershell
+./initialisation/database-init.ps1 -hostname localhost -port 5432 -username postgres -dbname onthemoney
+```
+
+### Manual setup scope
+
+If you do not use the init script, make sure you apply the SQL under these folders in dependency order:
+
+1. `sql/database/`
+2. `sql/schema/`
+3. `sql/tables/`
+4. `sql/sequence/`
+5. `sql/views/`
+6. `sql/functions/`
+7. `sql/default-data/`
+
+### API configuration
+
+If you plan to use the Flask API, create a local `connection_strings.py` file for [otm-api/otm-api.py](otm-api/otm-api.py). That module is expected to define:
+
+- `s_databasename`
+- `s_username`
+- `s_password`
+- `s_host`
+- `n_port`
 
 ## Usage
 
-### Importing Data
+### Importing data
 
-Run the Python scripts located in the `python/` directory. All scripts accept database credentials and file paths as arguments.
+Run the Python scripts in the `python/` directory. All scripts accept database credentials and file paths as arguments.
 
-**Common Arguments:**
-- `-f`, `--file`: Path to the file to import.
-- `-db`: Database name.
-- `-u`: Database username.
-- `-p`: Database password.
-- `-host`: Database host (default: localhost).
-- `-port`: Database port (default: 5432).
-- `-ban`: Bank account number (target account).
-- `-bad`: Bank account description (target account friendly name). *Note: Use either -ban or -bad.*
+Common arguments:
 
-**Example - Import ANZ Excel File:**
+- `-f`, `--file`: Path to the file to import
+- `-db`: Database name
+- `-u`: Database username
+- `-p`: Database password
+- `-host`: Database host, default `localhost`
+- `-port`: Database port, default `5432`
+- `-ban`: Bank account number
+- `-bad`: Bank account description
+
+Use either `-ban` or `-bad` to identify the target bank account.
+
+Example ANZ Excel import:
+
 ```bash
 python python/ImportBankFileANZ.py -f "path/to/statement.xls" -db "dbname" -u "user" -p "pass" -bad "Account Name"
 ```
 
-**Example - Import OFX File:**
+Example OFX import:
+
 ```bash
 python python/ImportOFXFile.py -f "path/to/export.ofx" -db "dbname" -u "user" -p "pass" -bad "Account Name"
 ```
 
 ### API
 
-A Flask-based API is available in `otm-api/otm-api.py` to trigger account summaries.
+The Flask API entry point is [otm-api/otm-api.py](otm-api/otm-api.py).
 
 ```bash
 python otm-api/otm-api.py
 ```
 
-Endpoints:
-- `PUT /summary/populate`: Triggers the `populate_account_summary_by_month` stored procedure.
+Current routes include:
+
+- `PUT /summary/populate`
+- `POST /rules/expense`
+- `GET /accounts/bank`
+- `GET /accounts/books`
 
 ## Testing
 
-Integration tests are located in the `test/` directory.
+Canonical API integration tests are in [test/test-api.ps1](test/test-api.ps1).
 
-To run the API integration tests (PowerShell):
+Run them after starting the API:
+
 ```powershell
 ./test/test-api.ps1
 ```
@@ -85,9 +138,9 @@ To run the API integration tests (PowerShell):
 ## Project Status
 
 The project is pre-alpha.
-Developed using Visual Studio Code and DBeaver on macOS 10.13 / Win 10 using Python 3.6.5 (including Pandas and Anaconda) with Postgres 10.4.
+Developed using Visual Studio Code and DBeaver on macOS 10.13 / Win 10 using Python 3.6.5 with PostgreSQL 10.4.
 
 ## Future Plans
 
-- **API**: Expand Flask API to wrap Python scripts in a RESTful interface.
+- **API**: Expand the Flask API to cover more of the import and reporting workflow.
 - **UI**: Potential development of a frontend.

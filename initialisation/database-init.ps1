@@ -42,6 +42,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 
 #functions
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.delete_bank_transactions_for_account.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.get_bank_account_descriptions.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_bank_transaction_from_anz_excel.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_bank_transaction_from_anz_mortgage_excel.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_bank_transaction_from_ofx.sql
@@ -56,7 +57,6 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_transfer_in.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_income.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_expense.sql
-psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_gl_rules_transfer_out.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_ofx.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_type_only.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.insert_import_rule_wildcard.sql
@@ -65,11 +65,16 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.purge_bank_import_from_everywhere.sql
 
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.delete_gl_entries_for_account.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.calculate_balance.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.calculate_balance_all.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\BOOKS.CleanStringMoney.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_account_balance_at_date.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_accounts.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.insert_gl_entry_basic.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.insert_gl_entry_from_bank_transaction.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.insert_gl_from_bank_import.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.insert_journal_entry_basic.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.insert_transactions_from_stage.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.last_day.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_bank_account_id.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.process_month_end_mortgage.sql
