@@ -63,6 +63,8 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.process_import_rules_from_bank_import.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.process_import_rules_for_transaction.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.purge_bank_import_from_everywhere.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.get_import_rules.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\bank.delete_import_rule.sql
 
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.delete_gl_entries_for_account.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.calculate_balance.sql

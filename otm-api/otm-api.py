@@ -150,6 +150,54 @@ def add_expense_rule():
 #         f.write(json.dumps(new_records, indent=2))
 #     return jsonify(record)
 
+@app.route('/rules', methods=['GET'])
+def rules_page():
+    return render_template('rules.html')
+
+@app.route('/rules/list', methods=['GET'])
+def list_rules():
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM bank.get_import_rules()")
+        rows = cur.fetchall()
+        cur.close()
+        return jsonify([{
+            'import_rule_id': row[0],
+            'rule_type': row[1],
+            'priority': row[2],
+            'start_date': row[3].isoformat() if row[3] else None,
+            'end_date': row[4].isoformat() if row[4] else None,
+            'bank_account': row[5],
+            'is_deposit': row[6],
+            'transaction_type': row[7],
+            'other_party_bank_account_number': row[8],
+            'details': row[9],
+            'particulars': row[10],
+            'code': row[11],
+            'reference': row[12],
+            'ofx_name': row[13],
+            'ofx_memo': row[14],
+            'wildcard_field': row[15],
+            'debit_account_1': row[16],
+            'credit_account_1': row[17],
+            'debit_account_2': row[18],
+            'credit_account_2': row[19]
+        } for row in rows])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/rules/<int:rule_id>', methods=['DELETE'])
+def delete_rule(rule_id):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT bank.delete_import_rule(%s::int4)", (rule_id,))
+        conn.commit()
+        cur.close()
+        return jsonify({'message': 'Rule deleted successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/accounts/bank', methods=['GET'])
 def get_bank_accounts():
     try:

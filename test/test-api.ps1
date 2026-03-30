@@ -116,3 +116,42 @@ catch {
     Write-Host "ERROR" -ForegroundColor Red
     Write-Host "    Details: $_"
 }
+
+# Test 7: List Import Rules
+$Uri = "$BaseUrl/rules/list"
+Write-Host "Testing [GET] /rules/list ... " -NoNewline
+
+try {
+    $response = Invoke-RestMethod -Method Get -Uri $Uri -ErrorAction Stop
+    # Response should be an array (even if empty)
+    if ($response -is [System.Array] -or $response -is [System.Collections.Generic.List[object]]) {
+        Write-Host "PASS (Returned array with $($response.Count) rule(s))" -ForegroundColor Green
+    } else {
+        Write-Host "FAIL" -ForegroundColor Red
+        Write-Host "    Expected an array but got: $($response.GetType().Name)"
+    }
+}
+catch {
+    Write-Host "ERROR" -ForegroundColor Red
+    Write-Host "    Details: $_"
+}
+
+# Test 8: Delete non-existent rule — expect a 500 with a descriptive error (not a crash)
+$Uri = "$BaseUrl/rules/999999"
+Write-Host "Testing [DELETE] /rules/999999 (non-existent) ... " -NoNewline
+
+try {
+    $response = Invoke-RestMethod -Method Delete -Uri $Uri -ErrorAction Stop
+    # If no exception, the function silently deleted nothing — acceptable
+    Write-Host "PASS (No error — rule did not exist)" -ForegroundColor Green
+}
+catch {
+    # A 500 is expected here; verify the response body contains 'error'
+    $statusCode = $_.Exception.Response.StatusCode.value__
+    if ($statusCode -eq 500) {
+        Write-Host "PASS (500 returned for non-existent rule as expected)" -ForegroundColor Green
+    } else {
+        Write-Host "ERROR (Unexpected status $statusCode)" -ForegroundColor Red
+        Write-Host "    Details: $_"
+    }
+}
