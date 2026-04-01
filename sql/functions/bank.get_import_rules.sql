@@ -61,6 +61,6 @@ begin
         on irgm.debit_account_id_2 = d2.account_id
     left join books.account c2
         on irgm.credit_account_id_2 = c2.account_id
-    order by ir.priority, ir.import_rule_id;
+    order by ir.import_rule_id;
 end;
 $$ language plpgsql;

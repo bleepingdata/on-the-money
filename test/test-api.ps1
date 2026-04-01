@@ -143,7 +143,7 @@ Write-Host "Testing [DELETE] /rules/999999 (non-existent) ... " -NoNewline
 try {
     $response = Invoke-RestMethod -Method Delete -Uri $Uri -ErrorAction Stop
     # If no exception, the function silently deleted nothing — acceptable
-    Write-Host "PASS (No error — rule did not exist)" -ForegroundColor Green
+    Write-Host "PASS (No error - rule did not exist)" -ForegroundColor Green
 }
 catch {
     # A 500 is expected here; verify the response body contains 'error'
