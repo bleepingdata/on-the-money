@@ -1,5 +1,7 @@
 drop function if exists bank.delete_bank_transaction_entries_for_account;
+drop function if exists bank.delete_import_rule;
 drop function if exists bank.get_bank_account_descriptions;
+drop function if exists bank.get_import_rules;
 drop function if exists bank.insert_bank_transaction_from_anz_excel;
 drop function if exists bank.insert_bank_transaction_from_anz_mortgage_excel;
 drop function if exists bank.insert_bank_transaction_from_ofx;

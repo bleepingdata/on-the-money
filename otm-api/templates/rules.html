@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On The Money - Import Rules</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        h1 { text-align: center; }
+        nav { text-align: center; margin-bottom: 1.5rem; }
+        nav a { color: #007bff; text-decoration: none; font-size: 1rem; }
+        nav a:hover { text-decoration: underline; }
+        #status { margin-bottom: 1rem; font-weight: bold; font-size: 1rem; text-align: center; min-height: 1.5rem; }
+        .success { color: green; }
+        .error { color: red; }
+        .table-wrapper { overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+        th { background-color: #007bff; color: white; padding: 8px 10px; text-align: left; white-space: nowrap; }
+        td { border: 1px solid #ddd; padding: 6px 10px; white-space: nowrap; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #e9f0ff; }
+        .btn-delete { padding: 4px 12px; font-size: 0.8rem; cursor: pointer; background-color: #dc3545; color: white; border: none; border-radius: 4px; }
+        .btn-delete:hover { background-color: #a71d2a; }
+        .btn-delete:disabled { background-color: #ccc; cursor: not-allowed; }
+        #loadingMsg { text-align: center; color: #555; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <h1>Import Rules</h1>
+    <nav><a href="/">&larr; Back to Manager</a></nav>
+    <div id="status"></div>
+    <div id="loadingMsg">Loading rules...</div>
+    <div class="table-wrapper">
+        <table id="rulesTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Priority</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Bank Account</th>
+                    <th>Is Deposit</th>
+                    <th>Tx Type</th>
+                    <th>Other Party Acct</th>
+                    <th>Details</th>
+                    <th>Particulars</th>
+                    <th>Code</th>
+                    <th>Reference</th>
+                    <th>OFX Name</th>
+                    <th>OFX Memo</th>
+                    <th>Wildcard Field</th>
+                    <th>Debit Acct 1</th>
+                    <th>Credit Acct 1</th>
+                    <th>Debit Acct 2</th>
+                    <th>Credit Acct 2</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="rulesBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function cell(value) {
+            const td = document.createElement('td');
+            td.textContent = (value === null || value === undefined) ? '' : value;
+            return td;
+        }
+
+        async function loadRules() {
+            const statusDiv = document.getElementById('status');
+            const loadingMsg = document.getElementById('loadingMsg');
+            const table = document.getElementById('rulesTable');
+            const tbody = document.getElementById('rulesBody');
+
+            try {
+                const response = await fetch('/rules/list');
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to load rules');
+                }
+                const rules = await response.json();
+
+                tbody.innerHTML = '';
+                rules.forEach(rule => {
+                    const tr = document.createElement('tr');
+                    tr.id = 'rule-row-' + rule.import_rule_id;
+                    tr.appendChild(cell(rule.import_rule_id));
+                    tr.appendChild(cell(rule.rule_type));
+                    tr.appendChild(cell(rule.priority));
+                    tr.appendChild(cell(rule.start_date));
+                    tr.appendChild(cell(rule.end_date));
+                    tr.appendChild(cell(rule.bank_account));
+                    tr.appendChild(cell(rule.is_deposit === null ? '' : rule.is_deposit ? 'Yes' : 'No'));
+                    tr.appendChild(cell(rule.transaction_type));
+                    tr.appendChild(cell(rule.other_party_bank_account_number));
+                    tr.appendChild(cell(rule.details));
+                    tr.appendChild(cell(rule.particulars));
+                    tr.appendChild(cell(rule.code));
+                    tr.appendChild(cell(rule.reference));
+                    tr.appendChild(cell(rule.ofx_name));
+                    tr.appendChild(cell(rule.ofx_memo));
+                    tr.appendChild(cell(rule.wildcard_field));
+                    tr.appendChild(cell(rule.debit_account_1));
+                    tr.appendChild(cell(rule.credit_account_1));
+                    tr.appendChild(cell(rule.debit_account_2));
+                    tr.appendChild(cell(rule.credit_account_2));
+
+                    const btnTd = document.createElement('td');
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-delete';
+                    btn.textContent = 'Delete';
+                    btn.dataset.ruleId = rule.import_rule_id;
+                    btn.addEventListener('click', handleDelete);
+                    btnTd.appendChild(btn);
+                    tr.appendChild(btnTd);
+
+                    tbody.appendChild(tr);
+                });
+
+                loadingMsg.style.display = 'none';
+                table.style.display = rules.length > 0 ? '' : 'none';
+                if (rules.length === 0) {
+                    loadingMsg.style.display = '';
+                    loadingMsg.textContent = 'No import rules found.';
+                }
+            } catch (err) {
+                loadingMsg.style.display = 'none';
+                statusDiv.textContent = 'Error loading rules: ' + err.message;
+                statusDiv.className = 'error';
+            }
+        }
+
+        async function handleDelete(event) {
+            const btn = event.currentTarget;
+            const ruleId = btn.dataset.ruleId;
+            const statusDiv = document.getElementById('status');
+
+            if (!confirm('Delete rule #' + ruleId + '? This cannot be undone.')) return;
+
+            btn.disabled = true;
+            statusDiv.textContent = '';
+            statusDiv.className = '';
+
+            try {
+                const response = await fetch('/rules/' + ruleId, { method: 'DELETE' });
+                const data = await response.json();
+                if (response.ok) {
+                    statusDiv.textContent = data.message + ' (Rule #' + ruleId + ')';
+                    statusDiv.className = 'success';
+                    const row = document.getElementById('rule-row-' + ruleId);
+                    if (row) row.remove();
+                    const tbody = document.getElementById('rulesBody');
+                    if (tbody.children.length === 0) {
+                        document.getElementById('rulesTable').style.display = 'none';
+                        const loadingMsg = document.getElementById('loadingMsg');
+                        loadingMsg.style.display = '';
+                        loadingMsg.textContent = 'No import rules found.';
+                    }
+                } else {
+                    statusDiv.textContent = 'Error: ' + data.error;
+                    statusDiv.className = 'error';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                statusDiv.textContent = 'Network Error: ' + err.message;
+                statusDiv.className = 'error';
+                btn.disabled = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadRules);
+    </script>
+</body>
+</html>
