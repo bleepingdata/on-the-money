@@ -1,36 +1,36 @@
-drop function if exists books.insert_gl_entry_basic;
+﻿DROP FUNCTION IF EXISTS books.insert_gl_entry_basic;
 
-create or replace function books.insert_gl_entry_basic (n_gl_type_id int2, 
+CREATE OR REPLACE FUNCTION books.insert_gl_entry_basic (n_gl_type_id int2, 
 n_debit_account_id int,
 n_debit_amount numeric(16,2),
 n_credit_account_id int,
 n_credit_amount numeric(16,2),
 d_gl_date date,
-n_debit_account_id_2 int DEFAULT null,
-n_debit_amount_2 numeric(16,2) DEFAULT null,
-n_credit_account_id_2 int DEFAULT null,
-n_credit_amount_2 numeric(16,2) DEFAULT null,
-s_memo varchar(256) DEFAULT null,
-n_bank_account_id int4 DEFAULT null,
-b_bank_account_is_debit boolean DEFAULT null,
-n_bank_transaction_id int8 DEFAULT null,
-n_matched_import_rule_id int4 DEFAULT null) 
-returns int as $$ 
-declare n_gl_grouping_id int8;
-begin
+n_debit_account_id_2 int DEFAULT NULL,
+n_debit_amount_2 numeric(16,2) DEFAULT NULL,
+n_credit_account_id_2 int DEFAULT NULL,
+n_credit_amount_2 numeric(16,2) DEFAULT NULL,
+s_memo varchar(256) DEFAULT NULL,
+n_bank_account_id int4 DEFAULT NULL,
+b_bank_account_is_debit boolean DEFAULT NULL,
+n_bank_transaction_id int8 DEFAULT NULL,
+n_matched_import_rule_id int4 DEFAULT NULL) 
+RETURNS int AS $$ 
+DECLARE n_gl_grouping_id int8;
+BEGIN
 
-	select
-	nextval('books.gl_grouping_seq') into
+	SELECT
+	nextval('books.gl_grouping_seq') INTO
 		n_gl_grouping_id;
 
 
-	if (n_debit_account_id is null or n_credit_account_id is null)
-	then
+	IF (n_debit_account_id IS NULL OR n_credit_account_id IS NULL)
+	THEN
 		RAISE EXCEPTION 'Missing n_debit_account_id or n_credit_account_id'
     	USING HINT = 'Please check your parameters';
-    end if;
+    END IF;
     
-    IF ((n_debit_amount + coalesce(n_debit_amount_2,0)) <> (n_credit_amount + coalesce(n_credit_amount_2,0)))
+    IF ((n_debit_amount + COALESCE(n_debit_amount_2,0)) <> (n_credit_amount + COALESCE(n_credit_amount_2,0)))
     THEN
 	    RAISE EXCEPTION 'Sum of credits does not equal sum of debits'
     	USING HINT = 'Please check your parameters';
@@ -49,8 +49,7 @@ begin
     	USING HINT = 'Please check your parameters';
     END IF;
     
-	insert
-	into
+	INSERT INTO
 		books.general_ledger ( gl_type_id,
 		gl_date,
 		gl_grouping_id,
@@ -61,18 +60,18 @@ begin
 		bank_account_id,
 		bank_transaction_id,
 		matched_import_rule_id)
-	values ( n_gl_type_id,
+	VALUES ( n_gl_type_id,
  	d_gl_date,
 	n_gl_grouping_id,
 	n_debit_account_id,
 	n_debit_amount,
 	0,
 	s_memo,
-	case when b_bank_account_is_debit = true then n_bank_account_id else null end,
+	CASE WHEN b_bank_account_is_debit = TRUE THEN n_bank_account_id ELSE NULL END,
 	n_bank_transaction_id,
     n_matched_import_rule_id);
 	
-	insert into
+	INSERT INTO
 		books.general_ledger ( gl_type_id,
 		gl_date,
 		gl_grouping_id,
@@ -83,21 +82,20 @@ begin
 		bank_account_id,
 		bank_transaction_id,
 		matched_import_rule_id)
-	values ( n_gl_type_id,
+	VALUES ( n_gl_type_id,
 	 d_gl_date,
 	n_gl_grouping_id,
 	n_credit_account_id,
 	0,
 	n_credit_amount,
 	s_memo,
-	case when b_bank_account_is_debit = false then n_bank_account_id else null end,
+	CASE WHEN b_bank_account_is_debit = FALSE THEN n_bank_account_id ELSE NULL END,
 	n_bank_transaction_id,
     n_matched_import_rule_id);
 	
     IF (n_debit_account_id_2 IS NOT NULL AND n_debit_amount_2 IS NOT NULL)
     THEN
-		insert
-		into
+		INSERT INTO
 			books.general_ledger ( gl_type_id,
 			gl_date,
 			gl_grouping_id,
@@ -108,14 +106,14 @@ begin
 			bank_account_id,
 			bank_transaction_id,
 			matched_import_rule_id)
-		values ( n_gl_type_id,
+		VALUES ( n_gl_type_id,
 	 	d_gl_date,
 		n_gl_grouping_id,
 		n_debit_account_id_2,
 		n_debit_amount_2,
 		0,
 		s_memo,
-		case when b_bank_account_is_debit = true then n_bank_account_id else null end,
+		CASE WHEN b_bank_account_is_debit = TRUE THEN n_bank_account_id ELSE NULL END,
 		n_bank_transaction_id,
 	    n_matched_import_rule_id);
     END IF;
@@ -123,7 +121,7 @@ begin
     
 	IF (n_credit_account_id_2 IS NOT NULL AND n_credit_amount_2 IS NOT NULL)
     THEN
-		insert into
+		INSERT INTO
 			books.general_ledger ( gl_type_id,
 			gl_date,
 			gl_grouping_id,
@@ -134,19 +132,19 @@ begin
 			bank_account_id,
 			bank_transaction_id,
 			matched_import_rule_id)
-		values ( n_gl_type_id,
+		VALUES ( n_gl_type_id,
 		 d_gl_date,
 		n_gl_grouping_id,
 		n_credit_account_id_2,
 		0,
 		n_credit_amount_2,
 		s_memo,
-		case when b_bank_account_is_debit = false then n_bank_account_id else null end,
+		CASE WHEN b_bank_account_is_debit = FALSE THEN n_bank_account_id ELSE NULL END,
 		n_bank_transaction_id,
     	n_matched_import_rule_id);    
     END IF;
     
-    return 1;
-end;
+    RETURN 1;
+END;
 
-$$ language plpgsql;
+$$ LANGUAGE plpgsql;

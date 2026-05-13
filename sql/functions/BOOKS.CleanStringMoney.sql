@@ -1,18 +1,18 @@
-drop function if exists books.cleanstringmoney;
-
-create or replace function books.cleanstringmoney(moneyasstring varchar(50))
-returns money
-as $$
-declare
+﻿DROP FUNCTION IF EXISTS books.cleanstringmoney;
+ 
+CREATE OR REPLACE FUNCTION books.cleanstringmoney(moneyasstring varchar(50))
+RETURNS money
+AS $$
+DECLARE
     amount money;
     workingstring varchar(50);
-begin
-    select rtrim($1) into workingstring;
+BEGIN
+    SELECT rtrim($1) INTO workingstring;
     -- set workingstring = replace(workingstring, '$', '');
     -- set workingstring = replace(workingstring, ' ', '');
 
     -- select cast(workingstring as money) into amount;
 
-    return amount;
-end;
-$$ language plpgsql;
+    RETURN amount;
+END;
+$$ LANGUAGE plpgsql;

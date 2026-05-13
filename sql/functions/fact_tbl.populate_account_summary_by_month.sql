@@ -1,83 +1,79 @@
-drop
-	function if exists fact_tbl.populate_account_summary_by_month;
+﻿DROP FUNCTION IF EXISTS fact_tbl.populate_account_summary_by_month;
 
- create
-or replace
-function fact_tbl.populate_account_summary_by_month() returns void as $$ 
-begin 
+ CREATE OR REPLACE FUNCTION fact_tbl.populate_account_summary_by_month() RETURNS void AS $$ 
+BEGIN 
 	
-	truncate table
+	TRUNCATE TABLE
 		fact_tbl.account_summary_by_month;
 	
-with monthly_summary as 
+WITH monthly_summary AS 
 (
- select
+ SELECT
 	gl.account_id,
 	gl.gl_date,
 	gl.debit_amount,
 	gl.credit_amount
-from
+FROM
 	books.general_ledger gl
-union all select
+UNION ALL SELECT
 	a.account_id,
-	d.month_year_date as gl_date,
-	0 as debit_amount,
-	0 as credit_amount
-from
+	d.month_year_date AS gl_date,
+	0 AS debit_amount,
+	0 AS credit_amount
+FROM
 	dimension.dates d
-inner join books.account a on
+INNER JOIN books.account a ON
 	d.datekey >= a.open_date
-left join books.general_ledger gl on
+LEFT JOIN books.general_ledger gl ON
 	d.datekey = gl.gl_date
-	and a.account_id = gl.account_id
-where
-	gl.account_id is null
-	and d.datekey >= (
-	select
+	AND a.account_id = gl.account_id
+WHERE
+	gl.account_id IS NULL
+	AND d.datekey >= (
+	SELECT
 		min(gl_date)
-	from
+	FROM
 		books.general_ledger)
-	and d.month_year_date <= (
-	select
+	AND d.month_year_date <= (
+	SELECT
 		(date_trunc('month', max(gl_date)) + interval '1 month' - interval '1 day')::date
-	from
+	FROM
 		books.general_ledger)
-group by a.account_id, d.month_year_date
+GROUP BY a.account_id, d.month_year_date
 )
- insert
-	into
+ INSERT INTO
 		fact_tbl.account_summary_by_month ( account_id, year, month_number, month_end_date, debit_amount, credit_amount, debit_amount_running_total, credit_amount_running_total, balance ) 
-		select
+		SELECT
 			transactions.account_id,
 			transactions.year,
 			transactions.month_number,
 			transactions.month_end_date,
 			transactions.debit_amount,
 			transactions.credit_amount,
-			sum ( transactions.debit_amount ) over ( partition by transactions.account_id order by transactions.year, transactions.month_number) as debit_amount_running_total,
-			sum ( transactions.credit_amount ) over ( partition by transactions.account_id order by transactions.year, transactions.month_number) as credit_amount_running_total,
-			sum ( transactions.debit_amount - transactions.credit_amount) over ( partition by transactions.account_id order by transactions.year, transactions.month_number) as balance
-		from
-			( select
+			SUM ( transactions.debit_amount ) OVER ( PARTITION BY transactions.account_id ORDER BY transactions.year, transactions.month_number) AS debit_amount_running_total,
+			SUM ( transactions.credit_amount ) OVER ( PARTITION BY transactions.account_id ORDER BY transactions.year, transactions.month_number) AS credit_amount_running_total,
+			SUM ( transactions.debit_amount - transactions.credit_amount) OVER ( PARTITION BY transactions.account_id ORDER BY transactions.year, transactions.month_number) AS balance
+		FROM
+			( SELECT
 				account_id, 
-				date_part( 'year', gl_date ) as year, 
-				date_part( 'month', gl_date ) as month_number, 
-				date_trunc( 'month', max( gl_date )) + interval '1 month' - interval '1 day' as month_end_date, 
-				sum(debit_amount) as debit_amount, 
-				sum(credit_amount) as credit_amount
-			from
+				date_part( 'year', gl_date ) AS year, 
+				date_part( 'month', gl_date ) AS month_number, 
+				date_trunc( 'month', max( gl_date )) + interval '1 month' - interval '1 day' AS month_end_date, 
+				SUM(debit_amount) AS debit_amount, 
+				SUM(credit_amount) AS credit_amount
+			FROM
 				monthly_summary
-			group by
+			GROUP BY
 				account_id, date_part( 'year', gl_date ), date_part( 'month', gl_date ) 
 				) transactions
-		order by
+		ORDER BY
 			transactions.account_id,
 			transactions.year,
 			transactions.month_number;
 
- return;
+ RETURN;
 
 
-end;
+END;
 
- $$ language plpgsql;
+ $$ LANGUAGE plpgsql;

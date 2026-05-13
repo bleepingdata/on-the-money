@@ -1,14 +1,14 @@
-drop function if exists load.prepare_anz_excel;
+﻿DROP FUNCTION IF EXISTS load.prepare_anz_excel;
 
-create or replace function load.prepare_anz_excel ( s_bank_account_number varchar(56) = null,
-s_bank_account_friendly_name varchar(256) = null ) returns void as $$ declare n_account_id int;
-begin
+CREATE OR REPLACE FUNCTION load.prepare_anz_excel ( s_bank_account_number varchar(56) = NULL,
+s_bank_account_friendly_name varchar(256) = NULL ) RETURNS void AS $$ DECLARE n_account_id int;
+BEGIN
 -- truncate the table that will hold the imported data
- truncate
-	table
+ TRUNCATE
+	TABLE
 		load.anz_excel;
 
-return;
-end;
+RETURN;
+END;
 
-$$ language plpgsql;
+$$ LANGUAGE plpgsql;

@@ -1,43 +1,43 @@
-drop function if exists books.calculate_balance;
+﻿DROP FUNCTION IF EXISTS books.calculate_balance;
 
-create or replace function books.calculate_balance(n_accountid int)
-returns table (
+CREATE OR REPLACE FUNCTION books.calculate_balance(n_accountid int)
+RETURNS TABLE (
     accountid_ret int,
     deposit_amount_total_ret numeric(16,2),
     withdrawal_amount_total_ret numeric(16,2)
 )
-as $$
-declare
+AS $$
+DECLARE
     d_deposit_amount_total numeric(16,2);
     d_withdrawal_amount_total numeric(16,2);
-begin
+BEGIN
     /*
      get the balance for an account or accounts, taking the opening balance into account
      */
 
-    select sum(depositamount)
-    into d_deposit_amount_total
-    from books.transaction t
-        inner join books.transactionline tl on t.transactionid = tl.transactionid
-        inner join books.account a on tl.accountid = a.accountid
-    where tl.accountid = n_accountid
-        and coalesce(t.bankprocesseddate, '2100-01-01') >= a.openingbalancedate;
+    SELECT SUM(depositamount)
+    INTO d_deposit_amount_total
+    FROM books.transaction t
+        INNER JOIN books.transactionline tl ON t.transactionid = tl.transactionid
+        INNER JOIN books.account a ON tl.accountid = a.accountid
+    WHERE tl.accountid = n_accountid
+        AND COALESCE(t.bankprocesseddate, '2100-01-01') >= a.openingbalancedate;
 
-    select sum(withdrawalamount)
-    into d_withdrawal_amount_total
-    from books.transaction t
-        inner join books.transactionline tl on t.transactionid = tl.transactionid
-        inner join books.account a on tl.accountid = a.accountid
-    where tl.accountid = n_accountid
-        and coalesce(t.bankprocesseddate, '2100-01-01') >= a.openingbalancedate;
+    SELECT SUM(withdrawalamount)
+    INTO d_withdrawal_amount_total
+    FROM books.transaction t
+        INNER JOIN books.transactionline tl ON t.transactionid = tl.transactionid
+        INNER JOIN books.account a ON tl.accountid = a.accountid
+    WHERE tl.accountid = n_accountid
+        AND COALESCE(t.bankprocesseddate, '2100-01-01') >= a.openingbalancedate;
 
-    update books.account
-    set balance = (coalesce(d_deposit_amount_total, 0) - coalesce(d_withdrawal_amount_total, 0))
-    where accountid = n_accountid;
+    UPDATE books.account
+    SET balance = (COALESCE(d_deposit_amount_total, 0) - COALESCE(d_withdrawal_amount_total, 0))
+    WHERE accountid = n_accountid;
 
-    return query
-    select n_accountid,
-        coalesce(d_deposit_amount_total, 0),
-        coalesce(d_withdrawal_amount_total, 0);
-end;
-$$ language plpgsql;
+    RETURN QUERY
+    SELECT n_accountid,
+        COALESCE(d_deposit_amount_total, 0),
+        COALESCE(d_withdrawal_amount_total, 0);
+END;
+$$ LANGUAGE plpgsql;

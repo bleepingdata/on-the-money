@@ -1,52 +1,49 @@
-drop
-	function if exists bank.insert_bank_transaction_from_anz_mortgage_excel;
+﻿DROP FUNCTION IF EXISTS bank.insert_bank_transaction_from_anz_mortgage_excel;
 
-create or replace function bank.insert_bank_transaction_from_anz_mortgage_excel ( s_bank_account_number varchar(56) = null,
-s_bank_account_friendly_name varchar(256) = null ) 
-returns int8 as $$ 
-declare n_bank_account_id int;
+CREATE OR REPLACE FUNCTION bank.insert_bank_transaction_from_anz_mortgage_excel ( s_bank_account_number varchar(56) = NULL,
+s_bank_account_friendly_name varchar(256) = NULL ) 
+RETURNS int8 AS $$ 
+DECLARE n_bank_account_id int;
 n_import_identifier int8;
-begin
+BEGIN
 
- select
-	a.bank_account_id into
+ SELECT
+	a.bank_account_id INTO
 		n_bank_account_id
-	from
+	FROM
 		bank.account a
-	where
-		a.external_unique_identifier = coalesce( rtrim(s_bank_account_number),
+	WHERE
+		a.external_unique_identifier = COALESCE( rtrim(s_bank_account_number),
 		a.external_unique_identifier )
-		and a.external_friendly_name = coalesce( rtrim(s_bank_account_friendly_name),
+		AND a.external_friendly_name = COALESCE( rtrim(s_bank_account_friendly_name),
 		a.external_friendly_name )
-		and ( s_bank_account_number is not null
-		or s_bank_account_friendly_name is not null );
+		AND ( s_bank_account_number IS NOT NULL
+		OR s_bank_account_friendly_name IS NOT NULL );
 
-if n_bank_account_id is null then raise exception 'Nonexistent s_bank_account_number or s_bank_account_friendly_name --> %, %',
+IF n_bank_account_id IS NULL THEN RAISE EXCEPTION 'Nonexistent s_bank_account_number or s_bank_account_friendly_name --> %, %',
 s_bank_account_number,
 s_bank_account_friendly_name
-	using HINT = 'Please check incoming parameters for s_bank_account_number and s_bank_account_friendly_name';
-end if;
+	USING HINT = 'Please check incoming parameters for s_bank_account_number and s_bank_account_friendly_name';
+END IF;
 
-select
-	nextval('bank.import_identifier') into
+SELECT
+	nextval('bank.import_identifier') INTO
 		n_import_identifier;
 
-with distinct_loaded_dates as (
-select
-	cast( a."Date" as date ) as transaction_date
-from
+WITH distinct_loaded_dates AS (
+SELECT
+	CAST( a."Date" AS date ) AS transaction_date
+FROM
 	load.anz_mortgage_excel a ) 
-delete
-from
+DELETE FROM
 	bank.transaction t
-		using distinct_loaded_dates
-		where
+		USING distinct_loaded_dates
+		WHERE
 			distinct_loaded_dates.transaction_date = t.transaction_date
-			and t.bank_account_id = n_bank_account_id;
+			AND t.bank_account_id = n_bank_account_id;
 
 -- add to staging tables
- insert
-	into
+ INSERT INTO
 		bank.transaction ( bank_account_friendly_name,
 		bank_account_number,
 		bank_account_id,
@@ -61,26 +58,26 @@ from
 		details,
 		particulars,
 		code,
-		reference ) select
+		reference ) SELECT
 			a.bank_account_friendly_name,
 			a.bank_account_number,
 			n_bank_account_id,
 			n_import_identifier,
 			now(),
-			cast( a."Date" as date ),
-			cast ( a."Date" as date ),
-			cast( a."Amount" as money ),
-			cast( a."Balance" as money ),
+			CAST( a."Date" AS date ),
+			CAST ( a."Date" AS date ),
+			CAST( a."Amount" AS money ),
+			CAST( a."Balance" AS money ),
 			NULL,
 			NULL,
 			a."Details",
 			NULL,
 			NULL,
 			NULL
-		from
+		FROM
 			load.anz_mortgage_excel a;
 
-return n_import_identifier;
-end;
+RETURN n_import_identifier;
+END;
 
-$$ language plpgsql;
+$$ LANGUAGE plpgsql;

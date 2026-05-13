@@ -1,2 +1,2 @@
-drop sequence if exists bank.import_identifier;
-drop sequence if exists books.gl_grouping_seq;
+﻿DROP SEQUENCE IF EXISTS bank.import_identifier;
+DROP SEQUENCE IF EXISTS books.gl_grouping_seq;

@@ -1,26 +1,23 @@
-drop
-	function if exists bank.purge_bank_import_from_everywhere;
+﻿DROP FUNCTION IF EXISTS bank.purge_bank_import_from_everywhere;
 
- create
-or replace
-function bank.purge_bank_import_from_everywhere ( n_import_identifier int4 
-) returns void as $$
+ CREATE OR REPLACE FUNCTION bank.purge_bank_import_from_everywhere ( n_import_identifier int4 
+) RETURNS void AS $$
 
- begin
+ BEGIN
 
 
-	 with transactions_to_delete as
-	 (select transaction_id from bank.transaction where import_identifier = n_import_identifier )
-	  delete from books.general_ledger gl
-	  using transactions_to_delete 
-	  where gl.bank_transaction_id = transactions_to_delete.transaction_id;
+	 WITH transactions_to_delete AS
+	 (SELECT transaction_id FROM bank.transaction WHERE import_identifier = n_import_identifier )
+	  DELETE FROM books.general_ledger gl
+	  USING transactions_to_delete 
+	  WHERE gl.bank_transaction_id = transactions_to_delete.transaction_id;
 	  
 	 
-	 delete from bank."transaction"
-	 	where import_identifier = n_import_identifier;
+	 DELETE FROM bank."transaction"
+	 	WHERE import_identifier = n_import_identifier;
 	 
-	 perform fact.populate_account_summary_by_month();
+	 PERFORM fact.populate_account_summary_by_month();
 
-end;
+END;
 
- $$ language plpgsql;
+ $$ LANGUAGE plpgsql;

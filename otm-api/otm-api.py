@@ -5,23 +5,22 @@ Script: otm-api.py
 Purpose: A basic Flask API to trigger database summary calculations and potentially serve data.
 """
 import json
-from flask import Flask, request, jsonify, render_template
+import logging
 
-import otm_summary
-
-import connection_strings
+from flask import Flask, request, jsonify, render_template, Response
 import psycopg2
 
-# Import configuration variables.
-# 'connection_strings.py' is expected to define s_databasename, s_username, s_password, s_host, n_port.
-# This file is typically git-ignored to protect credentials.
-from connection_strings import *
+# connection_strings.py is git-ignored to protect credentials; must define all five variables below
+from connection_strings import s_databasename, s_username, s_password, s_host, n_port
+import otm_summary
+
+logger = logging.getLogger(__name__)
 
 # Establish the database connection globally for the app usage
 try:
-    conn = psycopg2.connect(database = s_databasename, user = s_username, password = s_password, host = s_host, port = n_port)
-except (Exception, psycopg2.Error) as error :
-    print ("Error while connecting to PostgreSQL", error)
+    conn = psycopg2.connect(database=s_databasename, user=s_username, password=s_password, host=s_host, port=n_port)
+except (Exception, psycopg2.Error) as error:
+    logger.critical("Error while connecting to PostgreSQL: %s", error)
 
 app = Flask(__name__)
 
@@ -29,16 +28,72 @@ app = Flask(__name__)
 # ROUTES
 # ---------------------------------------------------------
 @app.route('/')
-def index():
+def index() -> Response:
+    """
+    GET /
+
+    Renders the main application index page.
+
+    Args:
+        None
+
+    Returns:
+        200: HTML index page.
+
+    Raises:
+        None
+
+    Example:
+        >>> # Browser navigation to http://localhost:5000/
+    """
     return render_template('index.html')
 
 @app.route('/summary/populate', methods=['PUT'])
-def get_summary():
-    otm_summary.populate_account_summary_by_month (conn)
+def get_summary() -> Response:
+    """
+    PUT /summary/populate
+
+    Triggers recalculation of the fact.account_summary_by_month table by calling
+    the populate_account_summary_by_month stored procedure.
+
+    Args:
+        None
+
+    Returns:
+        200: Confirmation string on success.
+
+    Raises:
+        None
+
+    Example:
+        >>> # PUT http://localhost:5000/summary/populate
+    """
+    otm_summary.populate_account_summary_by_month(conn)
     return 'Population of fact.account_summary_by_month complete'
 
 @app.route('/rules/expense', methods=['POST'])
-def add_expense_rule():
+def add_expense_rule() -> Response:
+    """
+    POST /rules/expense
+
+    Creates a new expense import rule by calling bank.insert_import_rule_gl_rules_expense.
+    Accepts a JSON body containing the rule fields (see stored procedure parameters).
+    Empty strings in optional fields are normalised to None before the DB call.
+
+    Args:
+        None (body: JSON object with rule fields)
+
+    Returns:
+        200: { "message": "Rule added successfully" }
+        500: { "error": str } — database or server error.
+
+    Raises:
+        Exception: Re-raised after rolling back the transaction.
+
+    Example:
+        >>> # POST http://localhost:5000/rules/expense
+        >>> # Body: { "s_expense_account": "6100", "s_cash_account": "1010", ... }
+    """
     try:
         data = request.get_json()
         
@@ -151,11 +206,46 @@ def add_expense_rule():
 #     return jsonify(record)
 
 @app.route('/rules', methods=['GET'])
-def rules_page():
+def rules_page() -> Response:
+    """
+    GET /rules
+
+    Renders the import rules management page.
+
+    Args:
+        None
+
+    Returns:
+        200: HTML rules page.
+
+    Raises:
+        None
+
+    Example:
+        >>> # Browser navigation to http://localhost:5000/rules
+    """
     return render_template('rules.html')
 
 @app.route('/rules/list', methods=['GET'])
-def list_rules():
+def list_rules() -> Response:
+    """
+    GET /rules/list
+
+    Returns all import rules from bank.get_import_rules as a JSON array.
+
+    Args:
+        None
+
+    Returns:
+        200: JSON array of import rule objects.
+        500: { "error": str } — database error.
+
+    Raises:
+        Exception: Re-raised after returning a 500 response.
+
+    Example:
+        >>> # GET http://localhost:5000/rules/list
+    """
     try:
         cur = conn.cursor()
         cur.execute("SELECT * FROM bank.get_import_rules()")
@@ -187,7 +277,25 @@ def list_rules():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/rules/<int:rule_id>', methods=['DELETE'])
-def delete_rule(rule_id):
+def delete_rule(rule_id: int) -> Response:
+    """
+    DELETE /rules/{rule_id}
+
+    Deletes an import rule by ID using bank.delete_import_rule.
+
+    Args:
+        rule_id (int): The primary key of the import rule to delete.
+
+    Returns:
+        200: { "message": "Rule deleted successfully" }
+        500: { "error": str } — database error.
+
+    Raises:
+        Exception: Re-raised after rolling back the transaction.
+
+    Example:
+        >>> # DELETE http://localhost:5000/rules/42
+    """
     try:
         cur = conn.cursor()
         cur.execute("SELECT bank.delete_import_rule(%s::int4)", (rule_id,))
@@ -199,7 +307,25 @@ def delete_rule(rule_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/accounts/bank', methods=['GET'])
-def get_bank_accounts():
+def get_bank_accounts() -> Response:
+    """
+    GET /accounts/bank
+
+    Returns the list of bank account descriptions from bank.get_bank_account_descriptions.
+
+    Args:
+        None
+
+    Returns:
+        200: JSON array of bank account description strings.
+        500: { "error": str } — database error.
+
+    Raises:
+        Exception: Re-raised after returning a 500 response.
+
+    Example:
+        >>> # GET http://localhost:5000/accounts/bank
+    """
     try:
         cur = conn.cursor()
         cur.execute("select description from bank.get_bank_account_descriptions()")
@@ -210,7 +336,26 @@ def get_bank_accounts():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/accounts/books', methods=['GET'])
-def get_books_accounts():
+def get_books_accounts() -> Response:
+    """
+    GET /accounts/books
+
+    Returns chart-of-accounts entries from books.get_accounts, optionally filtered
+    by account type via the account_type query parameter.
+
+    Args:
+        None (query param: account_type (str, optional) — filters accounts by type)
+
+    Returns:
+        200: JSON array of { account_id, account_code, description } objects.
+        500: { "error": str } — database error.
+
+    Raises:
+        Exception: Re-raised after returning a 500 response.
+
+    Example:
+        >>> # GET http://localhost:5000/accounts/books?account_type=asset
+    """
     try:
         account_type = request.args.get('account_type')
         cur = conn.cursor()

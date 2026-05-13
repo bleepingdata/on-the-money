@@ -1,5 +1,7 @@
-create or replace function books.last_day(date)
-returns date as
+﻿DROP FUNCTION IF EXISTS books.last_day(date);
+
+CREATE OR REPLACE FUNCTION books.last_day(date)
+RETURNS date AS
 $$
-  select (date_trunc('month', $1) + interval '1 month - 1 day')::date;
-$$ language 'sql' immutable strict;
+  SELECT (date_trunc('month', $1) + interval '1 month - 1 day')::date;
+$$ LANGUAGE 'sql' IMMUTABLE STRICT;

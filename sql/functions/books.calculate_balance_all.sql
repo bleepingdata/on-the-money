@@ -1,34 +1,31 @@
-drop
-	function if exists books.calculate_balance_all;
+﻿DROP FUNCTION IF EXISTS books.calculate_balance_all;
 
- create
-or replace
-function books.calculate_balance_all () returns table
-	( accountid_ret int, deposit_amount_total_ret numeric ( 16, 2 ), withdrawal_amount_total_ret numeric( 16, 2 )) as $$ declare var_r record;
+ CREATE OR REPLACE FUNCTION books.calculate_balance_all () RETURNS TABLE
+	( accountid_ret int, deposit_amount_total_ret numeric ( 16, 2 ), withdrawal_amount_total_ret numeric( 16, 2 )) AS $$ DECLARE var_r record;
 
- begin /* 
+ BEGIN /* 
  get the balance for an account or accounts, taking the opening balance into account
  */
-for var_r in( select
+FOR var_r IN( SELECT
 	accountid
-from
+FROM
 	books.account 
-	order by accountid asc) loop 
+	ORDER BY accountid ASC) LOOP 
 	
 	accountid_ret := var_r.accountid;
 
-	select
+	SELECT
 		*
-		into accountid_ret, deposit_amount_total_ret, withdrawal_amount_total_ret
-	from
+		INTO accountid_ret, deposit_amount_total_ret, withdrawal_amount_total_ret
+	FROM
 		books.calculate_balance( accountid_ret );
 
- return next;
+ RETURN next;
 
 
-end loop;
+END LOOP;
 
 
-end;
+END;
 
- $$ language plpgsql;
+ $$ LANGUAGE plpgsql;

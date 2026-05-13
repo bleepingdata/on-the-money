@@ -1,20 +1,20 @@
-drop function if exists books.get_accounts;
+﻿DROP FUNCTION IF EXISTS books.get_accounts;
 
-create or replace function books.get_accounts(s_account_type varchar(50) default null)
-returns table (
+CREATE OR REPLACE FUNCTION books.get_accounts(s_account_type varchar(50) DEFAULT NULL)
+RETURNS TABLE (
     account_id int,
     account_code char(10),
     description varchar(50)
 )
-as $$
-begin
-    return query
-    select a.account_id,
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT a.account_id,
         a.account_code,
         a.description
-    from books.account a
-        inner join books.account_type at on a.account_type_id = at.account_type_id
-    where (s_account_type is null or at.account_type = s_account_type)
-    order by a.account_code;
-end;
-$$ language plpgsql;
+    FROM books.account a
+        INNER JOIN books.account_type at ON a.account_type_id = at.account_type_id
+    WHERE (s_account_type IS NULL OR at.account_type = s_account_type)
+    ORDER BY a.account_code;
+END;
+$$ LANGUAGE plpgsql;

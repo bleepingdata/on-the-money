@@ -1,22 +1,22 @@
-drop function if exists books.get_account_balance_at_date;
+﻿DROP FUNCTION IF EXISTS books.get_account_balance_at_date;
 
-create or replace function books.get_account_balance_at_date (n_account_id int, d_date date)
-returns decimal(16,2) as $$
-declare n_balance decimal(16,2);
-begin
+CREATE OR REPLACE FUNCTION books.get_account_balance_at_date (n_account_id int, d_date date)
+RETURNS decimal(16,2) AS $$
+DECLARE n_balance decimal(16,2);
+BEGIN
 /* 
  get the balance for an account at a date, taking the opening balance into account
  */
 
 	
-	select sum(gl.debit_amount) - sum(gl.credit_amount) into n_balance
-		from books.general_ledger  gl
+	SELECT SUM(gl.debit_amount) - SUM(gl.credit_amount) INTO n_balance
+		FROM books.general_ledger  gl
 		WHERE gl.gl_date <= d_date
-			and gl.account_id = n_account_id
-		group by gl.account_id;
+			AND gl.account_id = n_account_id
+		GROUP BY gl.account_id;
                                    
-	select coalesce(n_balance, 0) into n_balance;
+	SELECT COALESCE(n_balance, 0) INTO n_balance;
 
-	return (n_balance);
-end;
-$$ language plpgsql;
+	RETURN (n_balance);
+END;
+$$ LANGUAGE plpgsql;
