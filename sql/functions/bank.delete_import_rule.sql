@@ -1,5 +1,25 @@
 ﻿DROP FUNCTION IF EXISTS bank.delete_import_rule(int4);
 
+-- ============================================================
+-- Function : bank.delete_import_rule(int4)
+-- ============================================================
+-- Purpose  : Safely deletes an import rule and all its child records
+--            (matching criteria and GL matrix), raising an exception
+--            if the rule is still referenced by any transaction or GL entry.
+--
+-- Parameters
+--   n_import_rule_id  (int4) : The ID of the import rule to delete.
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.delete_import_rule(42);
+--
+-- Dependencies
+--   Tables    : bank.import_rule, bank.import_rule_fields_to_match,
+--               bank.import_rule_gl_matrix, bank.transaction,
+--               books.general_ledger
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.delete_import_rule(n_import_rule_id int4)
 RETURNS void AS $$
 BEGIN

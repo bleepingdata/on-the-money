@@ -1,5 +1,24 @@
 ﻿DROP FUNCTION IF EXISTS books.calculate_balance;
 
+-- ============================================================
+-- Function : books.calculate_balance(int)
+-- ============================================================
+-- Purpose  : Calculates the total deposits and withdrawals for a single
+--            account (from its opening balance date onward), updates the
+--            stored balance on books.account, and returns the totals.
+--
+-- Parameters
+--   n_accountid  (int) : The account ID to calculate the balance for.
+--
+-- Returns  : TABLE (accountid_ret int, deposit_amount_total_ret numeric(16,2),
+--            withdrawal_amount_total_ret numeric(16,2))
+--
+-- Usage
+--   SELECT * FROM books.calculate_balance(42);
+--
+-- Dependencies
+--   Tables    : books.transaction, books.transactionline, books.account
+-- ============================================================
 CREATE OR REPLACE FUNCTION books.calculate_balance(n_accountid int)
 RETURNS TABLE (
     accountid_ret int,

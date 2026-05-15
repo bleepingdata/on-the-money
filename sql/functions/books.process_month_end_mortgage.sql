@@ -1,5 +1,27 @@
 ﻿DROP FUNCTION IF EXISTS books.process_month_end_mortgage;
 
+-- ============================================================
+-- Function : books.process_month_end_mortgage(int4, int4, date)
+-- ============================================================
+-- Purpose  : Performs the month-end close for a mortgage by transferring
+--            any positive balance in the interest payable account into the
+--            loan principal account via a GL journal entry. Should be run
+--            after all transactions for the month have been imported.
+--
+-- Parameters
+--   n_loan_principal_account_id   (int4) : Account ID of the loan principal.
+--   n_interest_payable_account_id (int4) : Account ID of the interest payable.
+--   d_month_end_date              (date) : The last day of the month being closed.
+--
+-- Returns  : void
+--
+-- Usage
+--   PERFORM books.process_month_end_mortgage(15, 22, '2024-01-31');
+--
+-- Dependencies
+--   Tables    : books.general_ledger
+--   Functions : books.get_account_balance_at_date, books.insert_gl_entry_basic
+-- ============================================================
 CREATE OR REPLACE FUNCTION books.process_month_end_mortgage (n_loan_principal_account_id int4, n_interest_payable_account_id int4, d_month_end_date date)
 RETURNS void AS $$
 DECLARE n_balance numeric(16,2);

@@ -1,5 +1,25 @@
 ﻿DROP FUNCTION IF EXISTS books.calculate_balance_all;
 
+-- ============================================================
+-- Function : books.calculate_balance_all()
+-- ============================================================
+-- Purpose  : Recalculates and updates the stored balance for every account
+--            by iterating all accounts and calling books.calculate_balance
+--            for each one.
+--
+-- Parameters
+--   (none)
+--
+-- Returns  : TABLE (accountid_ret int, deposit_amount_total_ret numeric(16,2),
+--            withdrawal_amount_total_ret numeric(16,2))
+--
+-- Usage
+--   SELECT * FROM books.calculate_balance_all();
+--
+-- Dependencies
+--   Tables    : books.account
+--   Functions : books.calculate_balance
+-- ============================================================
  CREATE OR REPLACE FUNCTION books.calculate_balance_all () RETURNS TABLE
 	( accountid_ret int, deposit_amount_total_ret numeric ( 16, 2 ), withdrawal_amount_total_ret numeric( 16, 2 )) AS $$ DECLARE var_r record;
 

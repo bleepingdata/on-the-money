@@ -1,5 +1,38 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_import_rule_ofx;
 
+-- ============================================================
+-- Function : bank.insert_import_rule_ofx(varchar, varchar, varchar,
+--              varchar, varchar, varchar, int2)
+-- ============================================================
+-- Purpose  : Creates an OFX-specific import rule matching on transaction type,
+--            OFX name, and OFX memo fields, delegating to bank.insert_import_rule
+--            with a default high priority when none is supplied.
+--
+-- Parameters
+--   s_bank_account          (varchar) : Bank account description to associate with the rule.
+--   s_account               (varchar) : Debit GL account description.
+--   s_other_party_account   (varchar) : Credit GL account description.
+--   s_type                  (varchar) : OFX transaction type to match.
+--   s_ofx_name              (varchar) : OFX name field to match.
+--   s_ofx_memo              (varchar) : OFX memo field to match.
+--   n_priority              (int2)    : Rule priority; defaults to 32767 (highest) if NULL.
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.insert_import_rule_ofx(
+--       s_bank_account        := 'ANZ Cheque',
+--       s_account             := 'Groceries',
+--       s_other_party_account := 'ANZ Cheque',
+--       s_type                := 'DEBIT',
+--       s_ofx_name            := 'COUNTDOWN',
+--       s_ofx_memo            := NULL,
+--       n_priority            := NULL
+--   );
+--
+-- Dependencies
+--   Functions : bank.insert_import_rule
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_import_rule_ofx
 	(s_bank_account varchar(50),
 	s_account varchar(50),

@@ -1,5 +1,25 @@
 ﻿DROP FUNCTION IF EXISTS books.get_account_balance_at_date;
 
+-- ============================================================
+-- Function : books.get_account_balance_at_date(int, date)
+-- ============================================================
+-- Purpose  : Returns the running balance (total debits minus total credits)
+--            for an account in the general ledger up to and including the
+--            specified date.
+--
+-- Parameters
+--   n_account_id  (int)  : The account ID to query.
+--   d_date        (date) : The date up to which the balance is calculated.
+--
+-- Returns  : decimal(16,2) — the account balance at the given date, or 0 if
+--            no entries exist.
+--
+-- Usage
+--   SELECT books.get_account_balance_at_date(10, '2024-01-31');
+--
+-- Dependencies
+--   Tables    : books.general_ledger
+-- ============================================================
 CREATE OR REPLACE FUNCTION books.get_account_balance_at_date (n_account_id int, d_date date)
 RETURNS decimal(16,2) AS $$
 DECLARE n_balance decimal(16,2);

@@ -1,5 +1,26 @@
 ﻿DROP FUNCTION IF EXISTS fact_tbl.populate_account_summary_by_month;
 
+-- ============================================================
+-- Function : fact_tbl.populate_account_summary_by_month()
+-- ============================================================
+-- Purpose  : Rebuilds the fact_tbl.account_summary_by_month fact table
+--            by truncating it and repopulating it with per-account monthly
+--            debit, credit, and running-balance totals derived from the
+--            general ledger, including months with no transactions.
+--
+-- Parameters
+--   (none)
+--
+-- Returns  : void
+--
+-- Usage
+--   PERFORM fact_tbl.populate_account_summary_by_month();
+--
+-- Dependencies
+--   Tables    : books.general_ledger, books.account, dimension.dates,
+--               fact_tbl.account_summary_by_month
+--   Functions : (none)
+-- ============================================================
  CREATE OR REPLACE FUNCTION fact_tbl.populate_account_summary_by_month() RETURNS void AS $$ 
 BEGIN 
 	

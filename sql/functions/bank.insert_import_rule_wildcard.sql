@@ -1,5 +1,32 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_import_rule_wildcard;
 
+-- ============================================================
+-- Function : bank.insert_import_rule_wildcard(varchar, varchar,
+--              varchar, int2)
+-- ============================================================
+-- Purpose  : Creates an import rule that matches using a wildcard pattern
+--            against all transaction text fields, delegating to
+--            bank.insert_import_rule with a default priority of 0.
+--
+-- Parameters
+--   s_account               (varchar) : Debit GL account description.
+--   s_other_party_account   (varchar) : Credit GL account description.
+--   s_wildcard_field        (varchar) : LIKE pattern matched against any text field.
+--   n_priority              (int2)    : Rule priority; defaults to 0 if NULL.
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.insert_import_rule_wildcard(
+--       s_account             := 'Utilities',
+--       s_other_party_account := 'ANZ Cheque',
+--       s_wildcard_field      := '%VECTOR%',
+--       n_priority            := NULL
+--   );
+--
+-- Dependencies
+--   Functions : bank.insert_import_rule
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_import_rule_wildcard
 	(s_account varchar(50),
 	s_other_party_account varchar(50),

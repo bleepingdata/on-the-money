@@ -1,5 +1,40 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_import_rule_fields_to_match;
 
+-- ============================================================
+-- Function : bank.insert_import_rule_fields_to_match(int4, varchar, boolean,
+--              varchar, varchar, varchar, varchar, varchar, varchar,
+--              varchar, varchar, varchar)
+-- ============================================================
+-- Purpose  : Inserts the transaction-field matching criteria for an import
+--            rule, resolving the bank account description to an ID.
+--            All filter fields are optional; NULL means "match any value".
+--
+-- Parameters
+--   n_import_rule_id                   (int4)    : The parent import rule ID.
+--   s_bank_account                     (varchar) : Bank account description to restrict the rule to.
+--   b_is_deposit                       (boolean) : TRUE = deposits only, FALSE = withdrawals only.
+--   s_type                             (varchar) : Transaction type field to match.
+--   s_other_party_bank_account_number  (varchar) : Other party account number to match.
+--   s_details                          (varchar) : Details field pattern (supports LIKE).
+--   s_particulars                      (varchar) : Particulars field pattern (supports LIKE).
+--   s_code                             (varchar) : Code field pattern (supports LIKE).
+--   s_reference                        (varchar) : Reference field pattern (supports LIKE).
+--   s_ofx_name                         (varchar) : OFX name field pattern (supports LIKE).
+--   s_ofx_memo                         (varchar) : OFX memo field pattern (supports LIKE).
+--   s_wildcard_field                   (varchar) : Pattern matched across all text fields (supports LIKE).
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.insert_import_rule_fields_to_match(
+--       n_import_rule_id := 5,
+--       s_bank_account   := 'ANZ Cheque',
+--       s_details        := '%COUNTDOWN%'
+--   );
+--
+-- Dependencies
+--   Tables    : bank.account, bank.import_rule_fields_to_match
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_import_rule_fields_to_match
 	(n_import_rule_id int4,
 	s_bank_account varchar(50) DEFAULT NULL,

@@ -1,5 +1,41 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_import_rule_gl_rules_loan_interest;
 
+-- ============================================================
+-- Function : bank.insert_import_rule_gl_rules_loan_interest(varchar, varchar,
+--              int2, varchar, varchar, varchar, varchar, varchar, varchar,
+--              varchar, varchar, varchar, varchar)
+-- ============================================================
+-- Purpose  : Creates a complete loan interest accrual import rule, including
+--            the rule header, matching criteria, and a GL matrix entry that
+--            debits the interest expense account and credits interest payable.
+--
+-- Parameters
+--   s_interest_payable_account         (varchar) : GL description of the interest payable account to credit.
+--   s_interest_expense_account         (varchar) : GL description of the interest expense account to debit.
+--   n_priority                         (int2)    : Rule priority. Defaults to 0.
+--   s_bank_account                     (varchar) : Bank account description filter.
+--   s_type                             (varchar) : Transaction type filter.
+--   s_other_party_bank_account_number  (varchar) : Other party account number filter.
+--   s_details                          (varchar) : Details pattern filter.
+--   s_particulars                      (varchar) : Particulars pattern filter.
+--   s_code                             (varchar) : Code pattern filter.
+--   s_reference                        (varchar) : Reference pattern filter.
+--   s_ofx_name                         (varchar) : OFX name pattern filter.
+--   s_ofx_memo                         (varchar) : OFX memo pattern filter.
+--   s_wildcard_field                   (varchar) : Wildcard pattern matched across all text fields.
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.insert_import_rule_gl_rules_loan_interest(
+--       s_interest_payable_account := 'Mortgage Interest Payable',
+--       s_interest_expense_account := 'Mortgage Interest Expense'
+--   );
+--
+-- Dependencies
+--   Tables    : books.account, bank.import_rule_gl_matrix
+--   Functions : bank.insert_import_rule, bank.insert_import_rule_fields_to_match
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_import_rule_gl_rules_loan_interest
 	(s_interest_payable_account varchar(50),
 	s_interest_expense_account varchar(50),

@@ -1,5 +1,46 @@
 ﻿DROP FUNCTION IF EXISTS books.insert_gl_entry_basic;
 
+-- ============================================================
+-- Function : books.insert_gl_entry_basic(int2, int, numeric, int, numeric,
+--              date, int, numeric, int, numeric, varchar, int4, boolean,
+--              int8, int4)
+-- ============================================================
+-- Purpose  : Core double-entry posting function. Inserts two mandatory GL
+--            rows (debit + credit) and optionally two additional split rows,
+--            all sharing a single gl_grouping_id from the sequence. Validates
+--            that total debits equal total credits before inserting.
+--
+-- Parameters
+--   n_gl_type_id             (int2)    : GL entry type (e.g. 1 = Journal Entry).
+--   n_debit_account_id       (int)     : Primary debit account ID.
+--   n_debit_amount           (numeric) : Primary debit amount.
+--   n_credit_account_id      (int)     : Primary credit account ID.
+--   n_credit_amount          (numeric) : Primary credit amount.
+--   d_gl_date                (date)    : Date of the GL entry.
+--   n_debit_account_id_2     (int)     : Optional secondary debit account ID.
+--   n_debit_amount_2         (numeric) : Optional secondary debit amount.
+--   n_credit_account_id_2    (int)     : Optional secondary credit account ID.
+--   n_credit_amount_2        (numeric) : Optional secondary credit amount.
+--   s_memo                   (varchar) : Optional memo/description text.
+--   n_bank_account_id        (int4)    : Optional linked bank account ID.
+--   b_bank_account_is_debit  (boolean) : TRUE if the bank account is on the debit side.
+--   n_bank_transaction_id    (int8)    : Optional source bank transaction ID.
+--   n_matched_import_rule_id (int4)    : Optional import rule ID that matched.
+--
+-- Returns  : int — always returns 1 on success.
+--
+-- Usage
+--   PERFORM books.insert_gl_entry_basic(
+--     n_gl_type_id := 1::int2,
+--     n_debit_account_id := 10,  n_debit_amount := 500.00,
+--     n_credit_account_id := 20, n_credit_amount := 500.00,
+--     d_gl_date := '2024-01-15'
+--   );
+--
+-- Dependencies
+--   Tables    : books.general_ledger
+--   Sequences : books.gl_grouping_seq
+-- ============================================================
 CREATE OR REPLACE FUNCTION books.insert_gl_entry_basic (n_gl_type_id int2, 
 n_debit_account_id int,
 n_debit_amount numeric(16,2),

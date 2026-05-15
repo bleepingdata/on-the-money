@@ -1,5 +1,26 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_bank_transaction_from_ofx;
 
+-- ============================================================
+-- Function : bank.insert_bank_transaction_from_ofx(int4)
+-- ============================================================
+-- Purpose  : Loads bank transactions from the load.ofx staging table
+--            into bank.transaction for a specific bank account, first
+--            removing any existing transactions whose date matches the
+--            loaded data, then returning the new import identifier.
+--
+-- Parameters
+--   n_bank_account_id  (int4) : The internal bank account ID to import
+--                               transactions for.
+--
+-- Returns  : int8 — the import identifier assigned to this batch of transactions.
+--
+-- Usage
+--   SELECT bank.insert_bank_transaction_from_ofx(n_bank_account_id := 3);
+--
+-- Dependencies
+--   Tables    : bank.account, bank.transaction, load.ofx
+--   Sequences : bank.import_identifier
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_bank_transaction_from_ofx ( n_bank_account_id int4 = NULL ) 
 RETURNS int8 AS $$ 
 DECLARE n_import_identifier int8;

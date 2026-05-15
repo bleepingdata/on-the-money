@@ -1,5 +1,30 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_bank_transaction_from_anz_mortgage_excel;
 
+-- ============================================================
+-- Function : bank.insert_bank_transaction_from_anz_mortgage_excel(varchar, varchar)
+-- ============================================================
+-- Purpose  : Loads mortgage transactions from the load.anz_mortgage_excel staging
+--            table into bank.transaction, first removing any existing transactions
+--            whose transaction date overlaps with the loaded data,
+--            then returning the new import identifier.
+--
+-- Parameters
+--   s_bank_account_number        (varchar) : ANZ mortgage account number; optional
+--                                            if s_bank_account_friendly_name is provided.
+--   s_bank_account_friendly_name (varchar) : Friendly name of the account to match;
+--                                            optional if s_bank_account_number is provided.
+--
+-- Returns  : int8 — the import identifier assigned to this batch of transactions.
+--
+-- Usage
+--   SELECT bank.insert_bank_transaction_from_anz_mortgage_excel(
+--       s_bank_account_friendly_name := 'ANZ Mortgage'
+--   );
+--
+-- Dependencies
+--   Tables    : bank.account, bank.transaction, load.anz_mortgage_excel
+--   Sequences : bank.import_identifier
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_bank_transaction_from_anz_mortgage_excel ( s_bank_account_number varchar(56) = NULL,
 s_bank_account_friendly_name varchar(256) = NULL ) 
 RETURNS int8 AS $$ 

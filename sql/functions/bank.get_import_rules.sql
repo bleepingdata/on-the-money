@@ -1,5 +1,45 @@
 ﻿DROP FUNCTION IF EXISTS bank.get_import_rules();
 
+-- ============================================================
+-- Function : bank.get_import_rules()
+-- ============================================================
+-- Purpose  : Returns the full set of import rules with all matching
+--            criteria and GL account assignments in a single flat result set,
+--            suitable for review and export.
+--
+-- Parameters
+--   (none)
+--
+-- Returns  : TABLE
+--              import_rule_id                    int4
+--              rule_type                         varchar
+--              priority                          int2
+--              start_date                        date
+--              end_date                          date
+--              bank_account                      varchar
+--              is_deposit                        boolean
+--              transaction_type                  varchar
+--              other_party_bank_account_number   varchar
+--              details                           varchar
+--              particulars                       varchar
+--              code                              varchar
+--              reference                         varchar
+--              ofx_name                          varchar
+--              ofx_memo                          varchar
+--              wildcard_field                    varchar
+--              debit_account_1                   varchar
+--              credit_account_1                  varchar
+--              debit_account_2                   varchar
+--              credit_account_2                  varchar
+--
+-- Usage
+--   SELECT * FROM bank.get_import_rules();
+--
+-- Dependencies
+--   Tables    : bank.import_rule, bank.import_rule_type,
+--               bank.import_rule_fields_to_match, bank.import_rule_gl_matrix,
+--               bank.account, books.account
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.get_import_rules()
 RETURNS TABLE (
     import_rule_id      int4,

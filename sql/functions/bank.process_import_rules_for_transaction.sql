@@ -1,5 +1,25 @@
 ﻿DROP FUNCTION IF EXISTS bank.process_import_rules_for_transaction();
 
+-- ============================================================
+-- Function : bank.process_import_rules_for_transaction(int8)
+-- ============================================================
+-- Purpose  : Evaluates all active import rules against a single bank
+--            transaction and updates its matched_import_rule_id to the
+--            highest-priority matching rule. Rules are matched on wildcard
+--            or field-specific criteria; a fallback sentinel (rule ID 0)
+--            ensures every transaction receives a match.
+--
+-- Parameters
+--   n_transaction_id  (int8) : The transaction_id of the bank transaction to process.
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.process_import_rules_for_transaction(12345);
+--
+-- Dependencies
+--   Tables    : bank.transaction, bank.import_rule, bank.import_rule_fields_to_match
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.process_import_rules_for_transaction (n_transaction_id int8)
 RETURNS void AS $$
 BEGIN

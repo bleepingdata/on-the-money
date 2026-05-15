@@ -1,5 +1,33 @@
 ﻿DROP FUNCTION IF EXISTS bank.insert_import_rule_type_only;
 
+-- ============================================================
+-- Function : bank.insert_import_rule_type_only(varchar, varchar,
+--              varchar, int2)
+-- ============================================================
+-- Purpose  : Creates an import rule that matches solely on transaction type,
+--            with no bank account filter, delegating to bank.insert_import_rule.
+--            Uses a very low default priority so it is overridden by more
+--            specific rules.
+--
+-- Parameters
+--   s_account               (varchar) : Debit GL account description.
+--   s_other_party_account   (varchar) : Credit GL account description.
+--   s_type                  (varchar) : Transaction type field to match.
+--   n_priority              (int2)    : Rule priority; defaults to -32768 if NULL.
+--
+-- Returns  : void — no return value.
+--
+-- Usage
+--   PERFORM bank.insert_import_rule_type_only(
+--       s_account             := 'Bank Fees',
+--       s_other_party_account := 'ANZ Cheque',
+--       s_type                := 'FEE',
+--       n_priority            := NULL
+--   );
+--
+-- Dependencies
+--   Functions : bank.insert_import_rule
+-- ============================================================
 CREATE OR REPLACE FUNCTION bank.insert_import_rule_type_only
 	(s_account varchar(50),
 	s_other_party_account varchar(50),
