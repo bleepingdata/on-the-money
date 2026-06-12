@@ -1,36 +1,36 @@
+﻿
+DROP TABLE IF EXISTS fact_tbl.account_summary_by_month;
 
-drop table if exists fact_tbl.account_summary_by_month;
+DROP TABLE IF EXISTS books.general_ledger;
 
-drop table if exists books.general_ledger;
+DROP TABLE IF EXISTS bank.transaction;
 
-drop table if exists bank.transaction;
+DROP TABLE IF EXISTS bank.import_rule_gl_matrix;
+DROP TABLE IF EXISTS bank.import_rule_fields_to_match;
+DROP TABLE IF EXISTS bank.import_rule;
 
-drop table if exists bank.import_rule_gl_matrix;
-drop table if exists bank.import_rule_fields_to_match;
-drop table if exists bank.import_rule;
+DROP TABLE IF EXISTS dimension.dates;
 
-drop table if exists dimension.dates;
+DROP TABLE IF EXISTS load.anz_excel;
+DROP TABLE IF EXISTS load.anz_mortgage_excel;
+DROP TABLE IF EXISTS load.ofx;
 
-drop table if exists load.anz_excel;
-drop table if exists load.anz_mortgage_excel;
-drop table if exists load.ofx;
+DROP TABLE IF EXISTS bank.bank_account_gl_account_link;
 
-drop table if exists bank.bank_account_gl_account_link;
+DROP TABLE IF EXISTS bank.account_debt_type;
 
-drop table if exists bank.account_debt_type;
+DROP TABLE IF EXISTS books.account;
+DROP TABLE IF EXISTS books.account_type;
 
-drop table if exists books.account;
-drop table if exists books.account_type;
+DROP TABLE IF EXISTS bank.account;
+DROP TABLE IF EXISTS bank.account_type;
+DROP TABLE IF EXISTS bank.debt_type;
+DROP TABLE IF EXISTS bank.import_rule_type;
 
-drop table if exists bank.account;
-drop table if exists bank.account_type;
-drop table if exists bank.debt_type;
-drop table if exists bank.import_rule_type;
-
-drop schema if exists bank;
-drop schema if exists books;
-drop schema if exists dimension;
-drop schema if exists fact;
-drop schema if exists fact_tbl;
-drop schema if exists load;
+DROP SCHEMA IF EXISTS bank;
+DROP SCHEMA IF EXISTS books;
+DROP SCHEMA IF EXISTS dimension;
+DROP SCHEMA IF EXISTS fact;
+DROP SCHEMA IF EXISTS fact_tbl;
+DROP SCHEMA IF EXISTS load;
 

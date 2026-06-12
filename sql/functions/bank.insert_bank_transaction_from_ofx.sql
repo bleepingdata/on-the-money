@@ -1,31 +1,49 @@
-drop
-	function if exists bank.insert_bank_transaction_from_ofx;
+﻿DROP FUNCTION IF EXISTS bank.insert_bank_transaction_from_ofx;
 
-create or replace function bank.insert_bank_transaction_from_ofx ( n_bank_account_id int4 = null ) 
-returns int8 as $$ 
-declare n_import_identifier int8;
-begin
+-- ============================================================
+-- Function : bank.insert_bank_transaction_from_ofx(int4)
+-- ============================================================
+-- Purpose  : Loads bank transactions from the load.ofx staging table
+--            into bank.transaction for a specific bank account, first
+--            removing any existing transactions whose date matches the
+--            loaded data, then returning the new import identifier.
+--
+-- Parameters
+--   n_bank_account_id  (int4) : The internal bank account ID to import
+--                               transactions for.
+--
+-- Returns  : int8 — the import identifier assigned to this batch of transactions.
+--
+-- Usage
+--   SELECT bank.insert_bank_transaction_from_ofx(n_bank_account_id := 3);
+--
+-- Dependencies
+--   Tables    : bank.account, bank.transaction, load.ofx
+--   Sequences : bank.import_identifier
+-- ============================================================
+CREATE OR REPLACE FUNCTION bank.insert_bank_transaction_from_ofx ( n_bank_account_id int4 = NULL ) 
+RETURNS int8 AS $$ 
+DECLARE n_import_identifier int8;
+BEGIN
 
-select
-	nextval('bank.import_identifier') into
+SELECT
+	nextval('bank.import_identifier') INTO
 		n_import_identifier;
 
-with distinct_loaded_dates as (
-select
-	cast( a.dtposted as date ) as transaction_date
-from
+WITH distinct_loaded_dates AS (
+SELECT
+	CAST( a.dtposted AS date ) AS transaction_date
+FROM
 	load.ofx a
-where a.bank_account_id = n_bank_account_id) delete
-from
+WHERE a.bank_account_id = n_bank_account_id) DELETE FROM
 	bank.transaction t
-		using distinct_loaded_dates
-		where
+		USING distinct_loaded_dates
+		WHERE
 			distinct_loaded_dates.transaction_date = t.transaction_date
-			and t.bank_account_id = n_bank_account_id;
+			AND t.bank_account_id = n_bank_account_id;
 
 -- add to staging tables
- insert
-	into
+ INSERT INTO
 		bank.transaction ( bank_account_friendly_name,
 		bank_account_number,
 		bank_account_id,
@@ -36,24 +54,24 @@ from
 		amount,
 		type,
 		ofx_name,
-		ofx_memo) select
+		ofx_memo) SELECT
 			a.external_friendly_name,
 			a.external_unique_identifier,
 			a.bank_account_id,
 			n_import_identifier,
 			now(),
-			cast( o.dtposted as date ),
-			cast ( o.dtposted as date ),
-			cast( o.trnamt as money ),
+			CAST( o.dtposted AS date ),
+			CAST ( o.dtposted AS date ),
+			CAST( o.trnamt AS money ),
 			o.trntype,
 			o.name,
 			o.memo
-		from
+		FROM
 			load.ofx o
 			INNER JOIN bank.account a ON o.bank_account_id = a.bank_account_id
-		where o.bank_account_id=n_bank_account_id;
+		WHERE o.bank_account_id=n_bank_account_id;
 
-return n_import_identifier;
-end;
+RETURN n_import_identifier;
+END;
 
-$$ language plpgsql;
+$$ LANGUAGE plpgsql;

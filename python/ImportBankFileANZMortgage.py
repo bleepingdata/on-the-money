@@ -6,15 +6,15 @@ Process:
     2. Loads Excel data into a Pandas DataFrame and inserts it into the staging table using SQLAlchemy.
     3. Calls stored procedures to process transactions, apply rules, and update the General Ledger.
 """
+import logging
+
 import pandas as pd
 import psycopg2
 import sqlalchemy as sa
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, ForeignKey
-
-import argparse
+from sqlalchemy import create_engine
 from argparse import ArgumentParser
-#import os.path
 
+logger = logging.getLogger(__name__)
 
 print ("File Import started")
 
@@ -86,17 +86,17 @@ engine = create_engine(s_alchemy_connection)
 
 # Load spreadsheet
 print ("Loading Excel into data frame")
-xl = pd.ExcelFile(s_input_file)
-dfTransactions = xl.parse('Transactions',converters={'Amount':str,'Balance':str})
-dfTransactions['bank_account_number'] = s_bank_account_number
-dfTransactions['bank_account_friendly_name'] = s_bank_account_friendly_name
+excel_file = pd.ExcelFile(s_input_file)
+df_transactions = excel_file.parse('Transactions',converters={'Amount':str,'Balance':str})
+df_transactions['bank_account_number'] = s_bank_account_number
+df_transactions['bank_account_friendly_name'] = s_bank_account_friendly_name
 
 print ("Complete")
 
 # Insert the DataFrame into the 'anz_mortgage_excel' table in the 'load' schema.
 # if_exists='append' is used because we truncated the table in the preparation step.
 print ("Inserting data frame into load table")
-dfTransactions.to_sql(name='anz_mortgage_excel', if_exists='append',con=engine, schema='load', index=False, chunksize=1)
+df_transactions.to_sql(name='anz_mortgage_excel', if_exists='append',con=engine, schema='load', index=False, chunksize=1)
 print ("Complete")
 
 # ---------------------------------------------------------

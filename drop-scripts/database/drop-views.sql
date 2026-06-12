@@ -1,16 +1,16 @@
-drop view if exists dimension.account;
-drop view if exists dimension.account_type;
-drop view if exists dimension.months;
-drop view if exists dimension.bank_account;
+﻿DROP VIEW IF EXISTS dimension.account;
+DROP VIEW IF EXISTS dimension.account_type;
+DROP VIEW IF EXISTS dimension.months;
+DROP VIEW IF EXISTS dimension.bank_account;
 
-drop view if exists fact.account_balance;
-drop view if exists fact.account_movement;
-drop view if exists fact.transaction;
-drop view if exists fact.uncategorised_transactions;
-drop view if exists fact.gl_entries;
-drop view if exists fact.bank_transfers;
-drop view if exists fact.cash_balance;
-drop view if exists fact.bank_account_balance;
-drop view if exists fact.account_summary_by_month;
+DROP VIEW IF EXISTS fact.account_balance;
+DROP VIEW IF EXISTS fact.account_movement;
+DROP VIEW IF EXISTS fact.transaction;
+DROP VIEW IF EXISTS fact.uncategorised_transactions;
+DROP VIEW IF EXISTS fact.gl_entries;
+DROP VIEW IF EXISTS fact.bank_transfers;
+DROP VIEW IF EXISTS fact.cash_balance;
+DROP VIEW IF EXISTS fact.bank_account_balance;
+DROP VIEW IF EXISTS fact.account_summary_by_month;
 
 

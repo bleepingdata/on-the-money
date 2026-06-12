@@ -7,25 +7,24 @@ Process:
     3. Calls stored procedures to migrate staged data to the main transaction table and apply accounting rules.
 """
 import io
+import logging
 import re
 import warnings
-
-
-import pandas as pd
-import psycopg2
 import datetime
+from argparse import ArgumentParser
+
+import psycopg2
 import sqlalchemy as sa
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, ForeignKey
+from sqlalchemy import create_engine
 
 # Replaced ofxtools with ofxparse
-from ofxparse import OfxParser 
-
-import argparse
-from argparse import ArgumentParser
+from ofxparse import OfxParser
 
 # Suppress the BeautifulSoup HTML parser warning
 from bs4 import XMLParsedAsHTMLWarning
 warnings.filterwarnings('ignore', category=XMLParsedAsHTMLWarning)
+
+logger = logging.getLogger(__name__)
 
 print("File Import started")
 
@@ -109,22 +108,22 @@ cleaned_ofx_file = io.BytesIO(ofx_str.encode('utf-8'))
 ofx = OfxParser.parse(cleaned_ofx_file)
 
 # Extract account-level information
-acct = ofx.account
-s_bankid = acct.routing_number  # Bank ID / Routing Number
-s_acctid = acct.account_id      # Account ID
-s_accttype = acct.account_type  # Returns the string type, not the integer enum
-s_branchid = acct.branch_id     # Branch ID
+account = ofx.account
+s_bankid = account.routing_number  # Bank ID / Routing Number
+s_acctid = account.account_id      # Account ID
+s_accttype = account.account_type  # Returns the string type, not the integer enum
+s_branchid = account.branch_id     # Branch ID
 
 # Extract the list of transactions from the parsed statement
-txs = acct.statement.transactions
+transactions = account.statement.transactions
 
 # ---------------------------------------------------------
 # 4. TRANSACTION INSERTION
 # ---------------------------------------------------------
 # Loop through each transaction in the OFX file and insert it into the staging table
-for tx in txs:
+for transaction in transactions:
     # ofxparse returns tx.date as a datetime object; .date() isolates just the date
-    dt_dtposted = tx.date.date()
+    dt_dtposted = transaction.date.date()
     
     # Execute the insert function, mapping ofxparse properties to the expected arguments
     # Note: Mapping .type -> type, .amount -> amount, .id -> fitid, .payee -> name
@@ -136,12 +135,12 @@ for tx in txs:
         s_branchid,
         s_acctid,
         s_accttype,
-        tx.type,         # ofxparse uses .type instead of .trntype
+        transaction.type,         # ofxparse uses .type instead of .trntype
         dt_dtposted,
-        tx.amount,       # ofxparse uses .amount instead of .trnamt
-        tx.id,           # ofxparse uses .id instead of .fitid
-        tx.payee,        # ofxparse uses .payee instead of .name
-        tx.memo))
+        transaction.amount,       # ofxparse uses .amount instead of .trnamt
+        transaction.id,           # ofxparse uses .id instead of .fitid
+        transaction.payee,        # ofxparse uses .payee instead of .name
+        transaction.memo))
 
 # Commit all transaction inserts to the database
 conn.commit()

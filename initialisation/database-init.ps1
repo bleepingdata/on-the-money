@@ -69,7 +69,7 @@ psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\.
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.delete_gl_entries_for_account.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.calculate_balance.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.calculate_balance_all.sql
-psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\BOOKS.CleanStringMoney.sql
+psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.cleanstringmoney.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_account_balance_at_date.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.get_accounts.sql
 psql --host=$hostname --port=$port --username=$username --dbname $dbname -f ..\..\on-the-money\sql\functions\books.insert_gl_entry_basic.sql

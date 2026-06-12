@@ -1,22 +1,39 @@
-drop
-	function if exists books.delete_gl_entries_for_account;
+﻿DROP FUNCTION IF EXISTS books.delete_gl_entries_for_account;
 
- create
-or replace
-function books.delete_gl_entries_for_account ( n_account_id int, d_start_date date, d_end_date date
-) returns void as $$
+-- ============================================================
+-- Function : books.delete_gl_entries_for_account(int, date, date)
+-- ============================================================
+-- Purpose  : Deletes all general ledger entries for a given account within
+--            a specified date range, removing entire double-entry groups
+--            identified by gl_grouping_id.
+--
+-- Parameters
+--   n_account_id  (int)  : The account ID whose GL entries will be deleted.
+--   d_start_date  (date) : Start of the date range (inclusive).
+--   d_end_date    (date) : End of the date range (inclusive).
+--
+-- Returns  : void
+--
+-- Usage
+--   PERFORM books.delete_gl_entries_for_account(10, '2024-01-01', '2024-01-31');
+--
+-- Dependencies
+--   Tables    : books.general_ledger
+-- ============================================================
+ CREATE OR REPLACE FUNCTION books.delete_gl_entries_for_account ( n_account_id int, d_start_date date, d_end_date date
+) RETURNS void AS $$
 
- begin
+ BEGIN
 
-	 with groups_to_delete as
-	 (select gl.gl_grouping_id from books.general_ledger gl
-	 	where gl.account_id = n_account_id 
-	 	and gl.gl_date >= d_start_date 
-	 	and gl.gl_date <= d_end_date)
-	  delete from books.general_ledger gl
-	  using groups_to_delete 
-	  where gl.gl_grouping_id = groups_to_delete.gl_grouping_id;
+	 WITH groups_to_delete AS
+	 (SELECT gl.gl_grouping_id FROM books.general_ledger gl
+	 	WHERE gl.account_id = n_account_id 
+	 	AND gl.gl_date >= d_start_date 
+	 	AND gl.gl_date <= d_end_date)
+	  DELETE FROM books.general_ledger gl
+	  USING groups_to_delete 
+	  WHERE gl.gl_grouping_id = groups_to_delete.gl_grouping_id;
 	  
-end;
+END;
 
- $$ language plpgsql;
+ $$ LANGUAGE plpgsql;
