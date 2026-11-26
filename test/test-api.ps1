@@ -10,7 +10,12 @@ function Test-Endpoint {
         [string]$Method,
         [string]$Path,
         [string]$Body = $null,
-        [string]$ExpectedContent
+        [string]$ExpectedContent,
+        [int]$ExpectedStatus = 200,
+        [switch]$ContentMatch,
+        [switch]$NoSession,
+        [switch]$NoCsrf,
+        [switch]$PassThru
     )
 
     $Uri = "$BaseUrl$Path"
@@ -23,6 +28,12 @@ function Test-Endpoint {
             Uri         = $Uri
             ErrorAction = "Stop"
         }
+        if (-not $NoSession) {
+            $params["WebSession"] = $Session
+            if ($CsrfToken -and -not $NoCsrf) {
+                $params["Headers"] = @{ "X-CSRF-Token" = $CsrfToken }
+            }
+        }
         if ($Body) {
             $params["Body"] = $Body
             $params["ContentType"] = "application/json"
@@ -33,21 +44,27 @@ function Test-Endpoint {
         # If response is JSON object with message property, compare that
         $actual = if ($response.message) { $response.message } else { $response }
 
-        if ($actual -eq $ExpectedContent) {
+        if ($ExpectedStatus -eq 200 -and (($ContentMatch -and $actual -match [regex]::Escape($ExpectedContent)) -or
+            (-not $ContentMatch -and $actual -eq $ExpectedContent))) {
             Write-Host "PASS" -ForegroundColor Green
+            if ($PassThru) { return $response }
         }
         else {
             Write-Host "FAIL" -ForegroundColor Red
             Write-Host "    Expected: '$ExpectedContent'"
             Write-Host "    Actual:   '$actual'"
+            $script:Failures++
         }
     }
     catch {
         # Handle connection errors (e.g., API not running) or HTTP 500 errors
-        Write-Host "ERROR" -ForegroundColor Red
-        Write-Host "    Details: $_"
-        if ($_.Exception.Response) {
-             Write-Host "    Status:  $($_.Exception.Response.StatusCode)"
+        $status = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
+        if ($status -eq $ExpectedStatus) {
+            Write-Host "PASS (HTTP $status)" -ForegroundColor Green
+        } else {
+            Write-Host "ERROR" -ForegroundColor Red
+            Write-Host "    Details: $_"
+            $script:Failures++
         }
     }
 }
@@ -57,6 +74,34 @@ function Test-Endpoint {
 # ---------------------------------------------------------
 Write-Host "Running API Tests against $BaseUrl" -ForegroundColor Cyan
 Write-Host "Ensure the Flask API is running before executing this script.`n"
+$script:Failures = 0
+$Session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$CsrfToken = $null
+
+Test-Endpoint -Method "GET" -Path "/login" -ExpectedContent "On The Money - Sign in" -ContentMatch -NoSession
+foreach ($Path in @("/rules/list", "/accounts/bank", "/accounts/books",
+                   "/accounts/bank/balances", "/accounts/bank/summary")) {
+    Test-Endpoint -Method "GET" -Path $Path -ExpectedStatus 401 -NoSession
+}
+Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedStatus 401 -NoSession
+Test-Endpoint -Method "POST" -Path "/rules/expense" -ExpectedStatus 401 -NoSession
+Test-Endpoint -Method "DELETE" -Path "/rules/999999" -ExpectedStatus 401 -NoSession
+Test-Endpoint -Method "POST" -Path "/login" -Body '{"password":""}' -ExpectedStatus 401
+
+$ApiPassword = $env:OTM_API_PASSWORD
+if (-not $ApiPassword) {
+    $ApiPassword = Read-Host "API password" -AsSecureString | ConvertFrom-SecureString -AsPlainText
+}
+$LoginPayload = @{ password = $ApiPassword } | ConvertTo-Json
+$LoginResult = Test-Endpoint -Method "POST" -Path "/login" -Body $LoginPayload -ExpectedContent "Logged in" -PassThru
+if (-not $LoginResult) { throw "Login failed; cannot run authenticated API tests." }
+$CsrfToken = $LoginResult.csrf_token
+Test-Endpoint -Method "GET" -Path "/" -ExpectedContent "Account Summary Manager" -ContentMatch
+Test-Endpoint -Method "GET" -Path "/rules" -ExpectedContent "Import Rules" -ContentMatch
+Test-Endpoint -Method "GET" -Path "/bank-accounts" -ExpectedContent "Bank Accounts" -ContentMatch
+Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedStatus 403 -NoCsrf
+Test-Endpoint -Method "POST" -Path "/rules/expense" -ExpectedStatus 403 -NoCsrf
+Test-Endpoint -Method "DELETE" -Path "/rules/999999" -ExpectedStatus 403 -NoCsrf
 
 # Test 1: Trigger Summary Population
 Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedContent "Population of fact.account_summary_by_month complete"
@@ -96,7 +141,7 @@ $Uri = "$BaseUrl/accounts/bank"
 Write-Host "Testing [GET] /accounts/bank ... " -NoNewline
 
 try {
-    $response = Invoke-RestMethod -Method Get -Uri $Uri -ErrorAction Stop
+    $response = Invoke-RestMethod -Method Get -Uri $Uri -WebSession $Session -ErrorAction Stop
     Write-Host "PASS (Response received)" -ForegroundColor Green
 }
 catch {
@@ -109,7 +154,7 @@ $Uri = "$BaseUrl/accounts/books"
 Write-Host "Testing [GET] /accounts/books ... " -NoNewline
 
 try {
-    $response = Invoke-RestMethod -Method Get -Uri $Uri -ErrorAction Stop
+    $response = Invoke-RestMethod -Method Get -Uri $Uri -WebSession $Session -ErrorAction Stop
     Write-Host "PASS (Response received)" -ForegroundColor Green
 }
 catch {
@@ -120,7 +165,7 @@ catch {
 # Test 6a: Bank accounts page renders
 Write-Host "Testing [GET] /bank-accounts ... " -NoNewline
 try {
-    $response = Invoke-WebRequest -Method Get -Uri "$BaseUrl/bank-accounts" -UseBasicParsing -ErrorAction Stop
+    $response = Invoke-WebRequest -Method Get -Uri "$BaseUrl/bank-accounts" -WebSession $Session -UseBasicParsing -ErrorAction Stop
     if ($response.Content -match "Bank Accounts") {
         Write-Host "PASS" -ForegroundColor Green
     } else {
@@ -137,7 +182,7 @@ catch {
 foreach ($Query in @("", "?include_closed=true")) {
     Write-Host "Testing [GET] /accounts/bank/balances$Query ... " -NoNewline
     try {
-        $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/balances$Query" -ErrorAction Stop
+        $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/balances$Query" -WebSession $Session -ErrorAction Stop
         $items = @($response)
         $hasShape = ($items.Count -eq 0) -or ($null -ne $items[0].current_balance -and $null -ne $items[0].description)
         if ($hasShape) {
@@ -156,7 +201,7 @@ foreach ($Query in @("", "?include_closed=true")) {
 # Test 6d: Bank account summary by type
 Write-Host "Testing [GET] /accounts/bank/summary ... " -NoNewline
 try {
-    $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/summary" -ErrorAction Stop
+    $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/summary" -WebSession $Session -ErrorAction Stop
     $items = @($response)
     $hasShape = ($items.Count -eq 0) -or ($null -ne $items[0].bank_account_type -and $null -ne $items[0].total_balance)
     if ($hasShape) {
@@ -176,7 +221,7 @@ $Uri = "$BaseUrl/rules/list"
 Write-Host "Testing [GET] /rules/list ... " -NoNewline
 
 try {
-    $response = Invoke-RestMethod -Method Get -Uri $Uri -ErrorAction Stop
+    $response = Invoke-RestMethod -Method Get -Uri $Uri -WebSession $Session -ErrorAction Stop
     # Response should be an array (even if empty)
     if ($response -is [System.Array] -or $response -is [System.Collections.Generic.List[object]]) {
         Write-Host "PASS (Returned array with $($response.Count) rule(s))" -ForegroundColor Green
@@ -195,7 +240,7 @@ $Uri = "$BaseUrl/rules/999999"
 Write-Host "Testing [DELETE] /rules/999999 (non-existent) ... " -NoNewline
 
 try {
-    $response = Invoke-RestMethod -Method Delete -Uri $Uri -ErrorAction Stop
+    $response = Invoke-RestMethod -Method Delete -Uri $Uri -WebSession $Session -Headers @{ "X-CSRF-Token" = $CsrfToken } -ErrorAction Stop
     # If no exception, the function silently deleted nothing — acceptable
     Write-Host "PASS (No error - rule did not exist)" -ForegroundColor Green
 }
@@ -209,3 +254,6 @@ catch {
         Write-Host "    Details: $_"
     }
 }
+Test-Endpoint -Method "POST" -Path "/logout" -ExpectedContent "Logged out"
+Test-Endpoint -Method "GET" -Path "/accounts/bank" -ExpectedStatus 401
+if ($Failures) { throw "$Failures API test(s) failed." }

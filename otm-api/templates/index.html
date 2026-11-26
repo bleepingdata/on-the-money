@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ session['csrf_token'] }}">
     <title>On The Money - Manager</title>
     <style>
         body { font-family: sans-serif; padding: 2rem; text-align: center; }
@@ -21,6 +22,7 @@
 </head>
 <body>
     <h1>Account Summary Manager</h1>
+    <button id="btnLogout" type="button">Sign out</button>
     <nav style="margin-bottom: 1.5rem;">
         <a href="/rules" style="color: #007bff; text-decoration: none; font-size: 1rem;">View Import Rules &rarr;</a>
         <br>
@@ -69,6 +71,11 @@
     </div>
 
     <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            const response = await fetch('/logout', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken } });
+            if (response.ok) window.location.assign('/login');
+        });
         async function loadBooksDropdown(elementId, type) {
             const el = document.getElementById(elementId);
             try {
@@ -120,7 +127,10 @@
             statusDiv.className = '';
 
             try {
-                const response = await fetch('/summary/populate', { method: 'PUT' });
+                const response = await fetch('/summary/populate', {
+                    method: 'PUT',
+                    headers: { 'X-CSRF-Token': csrfToken }
+                });
                 const text = await response.text();
                 statusDiv.textContent = response.ok ? text : 'Error: ' + text;
                 statusDiv.className = response.ok ? 'success' : 'error';
@@ -167,7 +177,7 @@
             try {
                 const response = await fetch('/rules/expense', { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify(payload)
                 });
                 const data = await response.json();

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ session['csrf_token'] }}">
     <title>On The Money - Import Rules</title>
     <style>
         body { font-family: sans-serif; padding: 2rem; }
@@ -27,7 +28,7 @@
 </head>
 <body>
     <h1>Import Rules</h1>
-    <nav><a href="/">&larr; Back to Manager</a></nav>
+    <nav><a href="/">&larr; Back to Manager</a> <button id="btnLogout" type="button">Sign out</button></nav>
     <div id="status"></div>
     <div id="loadingMsg">Loading rules...</div>
     <div class="table-wrapper">
@@ -62,6 +63,11 @@
     </div>
 
     <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            const response = await fetch('/logout', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken } });
+            if (response.ok) window.location.assign('/login');
+        });
         function cell(value) {
             const td = document.createElement('td');
             td.textContent = (value === null || value === undefined) ? '' : value;
@@ -144,7 +150,10 @@
             statusDiv.className = '';
 
             try {
-                const response = await fetch('/rules/' + ruleId, { method: 'DELETE' });
+                const response = await fetch('/rules/' + ruleId, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-Token': csrfToken }
+                });
                 const data = await response.json();
                 if (response.ok) {
                     statusDiv.textContent = data.message + ' (Rule #' + ruleId + ')';

@@ -5,9 +5,15 @@ Script: otm-api.py
 Purpose: A basic Flask API to trigger database summary calculations and potentially serve data.
 """
 import json
+import hashlib
+import hmac
 import logging
+import os
+import secrets
+from datetime import timedelta
+from typing import Optional
 
-from flask import Flask, request, jsonify, render_template, Response
+from flask import Flask, request, jsonify, render_template, Response, redirect, session, url_for, make_response
 import psycopg2
 
 # connection_strings.py is git-ignored to protect credentials; must define all five variables below
@@ -16,13 +22,114 @@ import otm_summary
 
 logger = logging.getLogger(__name__)
 
+app = Flask(__name__)
+api_password = os.environ.get('OTM_API_PASSWORD')
+secret_key = os.environ.get('OTM_API_SECRET_KEY')
+if not api_password or not secret_key or len(secret_key) < 32:
+    raise RuntimeError('Set OTM_API_PASSWORD and OTM_API_SECRET_KEY (at least 32 characters) before starting the API')
+app.config.update(
+    SECRET_KEY=secret_key,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=os.environ.get('OTM_API_SECURE_COOKIE') == 'true',
+)
+
 # Establish the database connection globally for the app usage
 try:
     conn = psycopg2.connect(database=s_databasename, user=s_username, password=s_password, host=s_host, port=n_port)
 except (Exception, psycopg2.Error) as error:
     logger.critical("Error while connecting to PostgreSQL: %s", error)
 
-app = Flask(__name__)
+
+@app.before_request
+def require_login() -> Optional[Response]:
+    """
+    Require a session and CSRF token before accessing financial resources.
+
+    Args:
+        None
+
+    Returns:
+        A redirect or JSON error for unauthorized requests; None otherwise.
+
+    Raises:
+        None
+
+    Example:
+        >>> # Unauthenticated GET /accounts/bank returns 401.
+    """
+    if request.endpoint == 'login':
+        return None
+    if not session.get('authenticated'):
+        logger.warning("Unauthenticated request to %s", request.path)
+        if request.endpoint in ('index', 'rules_page', 'bank_accounts_page'):
+            return redirect(url_for('login'))
+        return make_response(jsonify({'error': 'Authentication required'}), 401)
+    if request.method not in ('GET', 'HEAD', 'OPTIONS'):
+        token = request.headers.get('X-CSRF-Token', '')
+        if not hmac.compare_digest(token, session.get('csrf_token', '')):
+            logger.warning("Invalid CSRF token for %s", request.path)
+            return make_response(jsonify({'error': 'Invalid CSRF token'}), 403)
+    return None
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login() -> Response:
+    """
+    GET /login renders the sign-in page; POST /login authenticates a password.
+
+    Args:
+        None (POST body: JSON object with a password)
+
+    Returns:
+        200: HTML page or JSON message and CSRF token.
+        400: Missing or invalid JSON body.
+        401: Incorrect password.
+
+    Raises:
+        None
+
+    Example:
+        >>> # POST /login with {"password": "your configured password"}
+    """
+    if request.method == 'GET':
+        return render_template('login.html')
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get('password'), str):
+        logger.warning("Invalid login request")
+        return make_response(jsonify({'error': 'Password required'}), 400)
+    supplied = hashlib.sha256(data['password'].encode('utf-8')).digest()
+    expected = hashlib.sha256(api_password.encode('utf-8')).digest()
+    if not hmac.compare_digest(supplied, expected):
+        logger.warning("Incorrect API password")
+        return make_response(jsonify({'error': 'Invalid password'}), 401)
+    session.clear()
+    session.permanent = True
+    session['authenticated'] = True
+    session['csrf_token'] = secrets.token_urlsafe(32)
+    return jsonify({'message': 'Logged in', 'csrf_token': session['csrf_token']})
+
+
+@app.route('/logout', methods=['POST'])
+def logout() -> Response:
+    """
+    POST /logout clears the current session.
+
+    Args:
+        None
+
+    Returns:
+        200: JSON confirmation.
+
+    Raises:
+        None
+
+    Example:
+        >>> # POST /logout with the session CSRF header.
+    """
+    session.clear()
+    return jsonify({'message': 'Logged out'})
 
 # ---------------------------------------------------------
 # ROUTES
@@ -497,4 +604,5 @@ def get_bank_account_summary() -> Response:
         if cur:
             cur.close()
 
-app.run(debug=True)
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', debug=False)

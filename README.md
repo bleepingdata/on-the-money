@@ -130,12 +130,21 @@ Each imported file is moved to a `processed` sub-folder of its account's incomin
 
 The Flask API entry point is [otm-api/otm-api.py](otm-api/otm-api.py).
 
-```bash
+Set a password and a signing key in the terminal that launches the API (do not put them in the repository). In PowerShell:
+
+```powershell
+$env:OTM_API_PASSWORD = Read-Host "API password" -AsSecureString | ConvertFrom-SecureString -AsPlainText
+$env:OTM_API_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
 python otm-api/otm-api.py
 ```
 
+Visit `http://127.0.0.1:5000/login` and sign in. The API only listens on loopback; the debugger is disabled. Browser pages and API calls require a login session, and requests that change data require the CSRF token supplied by the pages. A generated signing key is valid for this run; keep a stable, private key in your host's secret store if sessions must survive restarts. Changing the password does not invalidate existing sessions: rotate the signing key as well to sign them out.
+
+For future hosting, run the app with a production WSGI server behind an authenticated/TLS reverse proxy, set `OTM_API_SECURE_COOKIE=true`, keep the signing key and password in the host's secret store, and rate-limit `/login` at the proxy. Do not expose the Flask development server or HTTP port to the network. The current single-password login grants both read and write access; separate users/roles would require further changes.
+
 Current routes include:
 
+- `GET /login`, `POST /login`, `POST /logout`
 - `PUT /summary/populate`
 - `POST /rules/expense`
 - `GET /accounts/bank`
@@ -145,7 +154,7 @@ Current routes include:
 
 Canonical API integration tests are in [test/test-api.ps1](test/test-api.ps1).
 
-Run them after starting the API:
+Run them after starting the API; use the same password when prompted (or set `OTM_API_PASSWORD` in the test terminal). Tests operate on your configured database and can create rules or recalculate summaries:
 
 ```powershell
 ./test/test-api.ps1

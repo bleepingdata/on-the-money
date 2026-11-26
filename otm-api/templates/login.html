@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On The Money - Sign in</title>
+    <style>
+        body { font-family: sans-serif; max-width: 24rem; margin: 4rem auto; padding: 1rem; }
+        label, input, button { display: block; width: 100%; margin-top: 1rem; box-sizing: border-box; }
+        input, button { padding: 0.6rem; }
+        #error { color: #b00020; }
+    </style>
+</head>
+<body>
+    <h1>Sign in</h1>
+    <form id="loginForm">
+        <label for="password">API password</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+        <button type="submit">Sign in</button>
+    </form>
+    <p id="error" role="alert"></p>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async event => {
+            event.preventDefault();
+            const error = document.getElementById('error');
+            error.textContent = '';
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: document.getElementById('password').value })
+                });
+                if (!response.ok) {
+                    error.textContent = 'Invalid password';
+                    return;
+                }
+                window.location.assign('/');
+            } catch (err) {
+                error.textContent = 'Unable to sign in: ' + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
