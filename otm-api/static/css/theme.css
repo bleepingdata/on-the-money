@@ -1,0 +1,54 @@
+/*
+ * Design tokens for On The Money.
+ *
+ * This is the only file that should contain raw colours, fonts, sizes and
+ * spacing values. app.css consumes these variables, so editing a token here
+ * restyles every page consistently.
+ */
+:root {
+    /* Brand and surfaces */
+    --color-primary: #0d6e5b;
+    --color-primary-hover: #0a5546;
+    --color-on-primary: #ffffff;
+    --color-background: #f4f6f8;
+    --color-surface: #ffffff;
+    --color-surface-alt: #f8f9fa;
+    --color-surface-hover: #e8f3f0;
+    --color-border: #dde1e6;
+
+    /* Text */
+    --color-text: #1f2933;
+    --color-text-muted: #5f6b7a;
+
+    /* Status */
+    --color-success: #1b7f3b;
+    --color-danger: #c62828;
+    --color-danger-hover: #8e1c1c;
+    --color-warning: #b26a00;
+    --color-warning-surface: #fff4e0;
+    --color-disabled: #c4c9d0;
+
+    /* Navigation bar */
+    --color-nav-background: #12353a;
+    --color-nav-text: #e6f0ef;
+    --color-nav-hover: rgba(255, 255, 255, 0.12);
+
+    /* Typography */
+    --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-size-base: 1rem;
+    --font-size-small: 0.875rem;
+    --font-size-large: 1.25rem;
+    --font-size-title: 1.75rem;
+
+    /* Spacing scale */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 1rem;
+    --space-4: 1.5rem;
+    --space-5: 2rem;
+
+    /* Shape and depth */
+    --radius: 6px;
+    --shadow: 0 1px 3px rgba(15, 30, 40, 0.12);
+    --content-max-width: 1100px;
+}

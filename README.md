@@ -130,12 +130,24 @@ Each imported file is moved to a `processed` sub-folder of its account's incomin
 
 The Flask API entry point is [otm-api/otm-api.py](otm-api/otm-api.py).
 
+#### Which environment the API uses
+
+The API has no environment setting of its own. It connects to the database defined in the `connection_strings.py` that sits next to `otm-api.py`. That file is git-ignored, so it is not in the repo; `deploy.ps1` copies it from the chosen environment's private folder into `-AppPath` (default `C:\otm\src`). Deploy the app, then run it from that folder:
+
+```powershell
+.\deploy.ps1 -Environment sample_environment -Target Python
+python C:\otm\src\otm-api.py
+```
+
+The environment is whichever one you last deployed to that `-AppPath`. To switch environments, deploy again with the other `-Environment`. Running `python otm-api/otm-api.py` from the repo fails on the `connection_strings` import unless you have placed a `connection_strings.py` there yourself.
+
+#### Starting the API
 Set a password and a signing key in the terminal that launches the API (do not put them in the repository). In PowerShell:
 
 ```powershell
 $env:OTM_API_PASSWORD = Read-Host "API password" -AsSecureString | ConvertFrom-SecureString -AsPlainText
 $env:OTM_API_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
-python otm-api/otm-api.py
+python C:\otm\src\otm-api.py
 ```
 
 Visit `http://127.0.0.1:5000/login` and sign in. The API only listens on loopback; the debugger is disabled. Browser pages and API calls require a login session, and requests that change data require the CSRF token supplied by the pages. A generated signing key is valid for this run; keep a stable, private key in your host's secret store if sessions must survive restarts. Changing the password does not invalidate existing sessions: rotate the signing key as well to sign them out.
@@ -145,10 +157,21 @@ For future hosting, run the app with a production WSGI server behind an authenti
 Current routes include:
 
 - `GET /login`, `POST /login`, `POST /logout`
+- Pages: `GET /` (summary: bank balances and data-as-at date), `GET /rules`, `GET /rules/new`
 - `PUT /summary/populate`
 - `POST /rules/expense`
 - `GET /accounts/bank`
+- `GET /accounts/bank/data-as-at`
 - `GET /accounts/books`
+
+#### Look and feel
+
+All pages extend [otm-api/templates/base.html](otm-api/templates/base.html), which holds the navigation menu and loads the shared styles and script. Styling lives in [otm-api/static/css/](otm-api/static/css):
+
+- `theme.css` — design tokens (colours, fonts, spacing) as CSS variables. Change the look of the whole site here.
+- `app.css` — layout and components (navbar, buttons, tables, forms, alerts) built only from those tokens.
+
+Pages should reuse these classes and not add inline styles or hard-coded colours. Shared browser helpers (CSRF headers, fetch, logout, monthly population) are in `otm-api/static/js/app.js`. New menu entries go in `base.html`.
 
 ## Testing
 

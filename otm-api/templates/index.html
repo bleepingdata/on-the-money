@@ -1,195 +1,149 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ session['csrf_token'] }}">
-    <title>On The Money - Manager</title>
-    <style>
-        body { font-family: sans-serif; padding: 2rem; text-align: center; }
-        button { padding: 15px 30px; font-size: 18px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #status { margin-top: 20px; font-weight: bold; font-size: 1.2rem; }
-        .success { color: green; }
-        .error { color: red; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 600px; margin: 0 auto; text-align: left; }
-        .form-grid label { display: flex; flex-direction: column; font-size: 0.9rem; font-weight: bold; }
-        .form-grid input { padding: 5px; font-size: 14px; margin-top: 2px; }
-        .full-width { grid-column: span 2; text-align: center; margin-top: 15px; }
-        .form-grid select { padding: 5px; font-size: 14px; margin-top: 2px; }
-    </style>
-</head>
-<body>
-    <h1>Account Summary Manager</h1>
-    <button id="btnLogout" type="button">Sign out</button>
-    <nav style="margin-bottom: 1.5rem;">
-        <a href="/rules" style="color: #007bff; text-decoration: none; font-size: 1rem;">View Import Rules &rarr;</a>
-        <br>
-        <a href="/bank-accounts" style="color: #007bff; text-decoration: none; font-size: 1rem;">View Bank Accounts &rarr;</a>
-    </nav>
-    <button id="btnPopulate">Run Monthly Population</button>
-    <div id="status"></div>
-    
-    <hr style="margin: 2rem 0;">
+{% extends "base.html" %}
+{% block title %}Summary{% endblock %}
+{% block content %}
+<h1>Summary</h1>
 
-    <h2>Add Expense Rule</h2>
-    <div class="form-grid">
-        <label>Expense Account (Req)
-            <select id="s_expense_account">
-                <option value="">Loading...</option>
-            </select>
-        </label>
-        <label>Cash Account (Req)
-            <select id="s_cash_account">
-                <option value="">Loading...</option>
-            </select>
-        </label>
-        
-        <label>Priority<input type="number" id="n_priority" value="0"></label>
-        <label style="flex-direction: row; align-items: center; gap: 10px;">Is Deposit <input type="checkbox" id="b_is_deposit"></label>
+<div id="dataAsAt" class="alert data-as-at" role="status">
+    <span class="data-as-at__label">Data up to date as at</span>
+    <span id="dataAsAtDate" class="data-as-at__date">Loading...</span>
+    <span id="dataAsAtAge" class="text-muted"></span>
+</div>
 
-        <label>Bank Account
-            <select id="s_bank_account">
-                <option value="">(Any)</option>
-            </select>
-        </label>
-        <label>Type<input type="text" id="s_type"></label>
-        <label>Other Party Acct<input type="text" id="s_other_party_bank_account_number"></label>
-        <label>Details<input type="text" id="s_details"></label>
-        <label>Particulars<input type="text" id="s_particulars"></label>
-        <label>Code<input type="text" id="s_code"></label>
-        <label>Reference<input type="text" id="s_reference"></label>
-        <label>OFX Name<input type="text" id="s_ofx_name"></label>
-        <label>OFX Memo<input type="text" id="s_ofx_memo"></label>
-        <label>Wildcard Field<input type="text" id="s_wildcard_field"></label>
+<label><input type="checkbox" id="chkIncludeClosed"> Include closed accounts</label>
+<div id="status" class="status" role="status"></div>
 
-        <div class="full-width">
-            <button id="btnSaveRule">Save Rule</button>
-            <div id="ruleStatus" style="font-weight: bold; margin-top: 10px;"></div>
-        </div>
-    </div>
+<h2>Totals by account type</h2>
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Account Type</th>
+                <th class="num">Accounts</th>
+                <th class="num">Total Balance</th>
+            </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+        <tfoot id="summaryFoot"></tfoot>
+    </table>
+</div>
 
-    <script>
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-        document.getElementById('btnLogout').addEventListener('click', async () => {
-            const response = await fetch('/logout', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken } });
-            if (response.ok) window.location.assign('/login');
-        });
-        async function loadBooksDropdown(elementId, type) {
-            const el = document.getElementById(elementId);
-            try {
-                const response = await fetch(`/accounts/books?account_type=${type}`);
-                if (response.ok) {
-                    const accounts = await response.json();
-                    el.innerHTML = '<option value="">-- Select Account --</option>';
-                    accounts.forEach(acc => {
-                        const option = document.createElement('option');
-                        // The stored procedure currently expects the description name string
-                        option.value = acc.description;
-                        option.textContent = `${acc.description}`;
-                        el.appendChild(option);
-                    });
-                }
-            } catch (err) {
-                el.innerHTML = '<option value="">Error</option>';
-            }
-        }
+<h2>Bank accounts</h2>
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Opened</th>
+                <th>Closes</th>
+                <th>Last Transaction</th>
+                <th class="num">Transactions</th>
+                <th class="num">Current Balance</th>
+            </tr>
+        </thead>
+        <tbody id="accountsBody"></tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    // Data older than this many days is flagged as stale
+    const STALE_AFTER_DAYS = 7;
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-        async function loadBankDropdown() {
-            const el = document.getElementById('s_bank_account');
-            try {
-                const response = await fetch('/accounts/bank');
-                if (response.ok) {
-                    const accounts = await response.json();
-                    accounts.forEach(acc => {
-                        const option = document.createElement('option');
-                        option.value = acc;
-                        option.textContent = acc;
-                        el.appendChild(option);
-                    });
-                }
-            } catch (err) { console.error('Error loading bank accounts', err); }
-        }
+    function addCell(row, text, className) {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (className) td.className = className;
+        row.appendChild(td);
+    }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBooksDropdown('s_expense_account', 'expense');
-            loadBooksDropdown('s_cash_account', 'asset');
-            loadBankDropdown();
-        });
+    function balanceClass(value) {
+        return value < 0 ? 'num negative' : 'num';
+    }
 
-        document.getElementById('btnPopulate').addEventListener('click', async function() {
-            const btn = this;
-            const statusDiv = document.getElementById('status');
-            
-            btn.disabled = true;
-            statusDiv.textContent = 'Processing...';
-            statusDiv.className = '';
-
-            try {
-                const response = await fetch('/summary/populate', {
-                    method: 'PUT',
-                    headers: { 'X-CSRF-Token': csrfToken }
-                });
-                const text = await response.text();
-                statusDiv.textContent = response.ok ? text : 'Error: ' + text;
-                statusDiv.className = response.ok ? 'success' : 'error';
-            } catch (err) {
-                statusDiv.textContent = 'Network Error: ' + err.message;
-                statusDiv.className = 'error';
-            } finally {
-                btn.disabled = false;
-            }
-        });
-
-        document.getElementById('btnSaveRule').addEventListener('click', async function() {
-            const btn = this;
-            const statusDiv = document.getElementById('ruleStatus');
-            
-            // Gather form data
-            const payload = {
-                s_expense_account: document.getElementById('s_expense_account').value,
-                s_cash_account: document.getElementById('s_cash_account').value,
-                n_priority: parseInt(document.getElementById('n_priority').value) || 0,
-                s_bank_account: document.getElementById('s_bank_account').value,
-                b_is_deposit: document.getElementById('b_is_deposit').checked,
-                s_type: document.getElementById('s_type').value,
-                s_other_party_bank_account_number: document.getElementById('s_other_party_bank_account_number').value,
-                s_details: document.getElementById('s_details').value,
-                s_particulars: document.getElementById('s_particulars').value,
-                s_code: document.getElementById('s_code').value,
-                s_reference: document.getElementById('s_reference').value,
-                s_ofx_name: document.getElementById('s_ofx_name').value,
-                s_ofx_memo: document.getElementById('s_ofx_memo').value,
-                s_wildcard_field: document.getElementById('s_wildcard_field').value
-            };
-
-            if (!payload.s_expense_account || !payload.s_cash_account) {
-                statusDiv.textContent = 'Please enter both fields.';
-                statusDiv.className = 'error';
+    async function loadDataAsAt() {
+        const box = document.getElementById('dataAsAt');
+        const dateEl = document.getElementById('dataAsAtDate');
+        const ageEl = document.getElementById('dataAsAtAge');
+        try {
+            const data = await otm.fetchJson('/accounts/bank/data-as-at');
+            if (!data.latest_transaction_date) {
+                dateEl.textContent = 'No transactions imported';
+                box.classList.add('alert--warning');
                 return;
             }
-            
-            btn.disabled = true;
-            statusDiv.textContent = 'Saving...';
-            statusDiv.className = '';
+            // Parse as local midnight so the calendar date is not shifted by timezone
+            const [year, month, day] = data.latest_transaction_date.split('-').map(Number);
+            const latest = new Date(year, month - 1, day);
+            const today = new Date();
+            const ageDays = Math.max(0, Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - latest) / MS_PER_DAY));
+            dateEl.textContent = latest.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+            ageEl.textContent = ageDays === 0 ? '(today)' : `(${ageDays} day${ageDays === 1 ? '' : 's'} ago)`;
+            box.classList.add(ageDays > STALE_AFTER_DAYS ? 'alert--warning' : 'alert--success');
+        } catch (err) {
+            dateEl.textContent = 'Unavailable';
+            ageEl.textContent = err.message;
+            box.classList.add('alert--error');
+        }
+    }
 
-            try {
-                const response = await fetch('/rules/expense', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-                    body: JSON.stringify(payload)
-                });
-                const data = await response.json();
-                statusDiv.textContent = response.ok ? data.message : 'Error: ' + data.error;
-                statusDiv.className = response.ok ? 'success' : 'error';
-            } catch (err) {
-                statusDiv.textContent = 'Network Error: ' + err.message;
-                statusDiv.className = 'error';
-            } finally {
-                btn.disabled = false;
-            }
-        });
-    </script>
-</body>
-</html>
+    async function loadData() {
+        const statusDiv = document.getElementById('status');
+        const query = `?include_closed=${document.getElementById('chkIncludeClosed').checked}`;
+        otm.setStatus(statusDiv, 'Loading...', '');
+
+        try {
+            const [accounts, summary] = await Promise.all([
+                otm.fetchJson(`/accounts/bank/balances${query}`),
+                otm.fetchJson(`/accounts/bank/summary${query}`)
+            ]);
+
+            const accountsBody = document.getElementById('accountsBody');
+            accountsBody.replaceChildren();
+            accounts.forEach(acc => {
+                const row = document.createElement('tr');
+                addCell(row, acc.description);
+                addCell(row, acc.bank_account_type);
+                addCell(row, acc.open_date || '');
+                addCell(row, acc.close_date || '');
+                addCell(row, acc.last_transaction_date || '');
+                addCell(row, acc.transaction_count, 'num');
+                addCell(row, otm.money.format(acc.current_balance), balanceClass(acc.current_balance));
+                accountsBody.appendChild(row);
+            });
+
+            const summaryBody = document.getElementById('summaryBody');
+            const summaryFoot = document.getElementById('summaryFoot');
+            summaryBody.replaceChildren();
+            summaryFoot.replaceChildren();
+            let totalCount = 0;
+            let totalBalance = 0;
+            summary.forEach(item => {
+                const row = document.createElement('tr');
+                addCell(row, item.bank_account_type);
+                addCell(row, item.account_count, 'num');
+                addCell(row, otm.money.format(item.total_balance), balanceClass(item.total_balance));
+                summaryBody.appendChild(row);
+                totalCount += item.account_count;
+                totalBalance += item.total_balance;
+            });
+            const footRow = document.createElement('tr');
+            addCell(footRow, 'Net total');
+            addCell(footRow, totalCount, 'num');
+            addCell(footRow, otm.money.format(totalBalance), balanceClass(totalBalance));
+            summaryFoot.appendChild(footRow);
+
+            otm.setStatus(statusDiv, accounts.length === 0 ? 'No bank accounts found.' : '', '');
+        } catch (err) {
+            otm.setStatus(statusDiv, 'Error: ' + err.message, 'error');
+        }
+    }
+
+    document.getElementById('chkIncludeClosed').addEventListener('change', loadData);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDataAsAt();
+        loadData();
+    });
+</script>
+{% endblock %}

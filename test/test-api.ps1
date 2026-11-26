@@ -79,8 +79,10 @@ $Session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $CsrfToken = $null
 
 Test-Endpoint -Method "GET" -Path "/login" -ExpectedContent "On The Money - Sign in" -ContentMatch -NoSession
+# Stylesheets must load on the login page before authentication
+Test-Endpoint -Method "GET" -Path "/static/css/theme.css" -ExpectedContent "--color-primary" -ContentMatch -NoSession
 foreach ($Path in @("/rules/list", "/accounts/bank", "/accounts/books",
-                   "/accounts/bank/balances", "/accounts/bank/summary")) {
+                   "/accounts/bank/balances", "/accounts/bank/summary", "/accounts/bank/data-as-at")) {
     Test-Endpoint -Method "GET" -Path $Path -ExpectedStatus 401 -NoSession
 }
 Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedStatus 401 -NoSession
@@ -96,9 +98,9 @@ $LoginPayload = @{ password = $ApiPassword } | ConvertTo-Json
 $LoginResult = Test-Endpoint -Method "POST" -Path "/login" -Body $LoginPayload -ExpectedContent "Logged in" -PassThru
 if (-not $LoginResult) { throw "Login failed; cannot run authenticated API tests." }
 $CsrfToken = $LoginResult.csrf_token
-Test-Endpoint -Method "GET" -Path "/" -ExpectedContent "Account Summary Manager" -ContentMatch
+Test-Endpoint -Method "GET" -Path "/" -ExpectedContent "On The Money - Summary" -ContentMatch
 Test-Endpoint -Method "GET" -Path "/rules" -ExpectedContent "Import Rules" -ContentMatch
-Test-Endpoint -Method "GET" -Path "/bank-accounts" -ExpectedContent "Bank Accounts" -ContentMatch
+Test-Endpoint -Method "GET" -Path "/rules/new" -ExpectedContent "Add Expense Rule" -ContentMatch
 Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedStatus 403 -NoCsrf
 Test-Endpoint -Method "POST" -Path "/rules/expense" -ExpectedStatus 403 -NoCsrf
 Test-Endpoint -Method "DELETE" -Path "/rules/999999" -ExpectedStatus 403 -NoCsrf
@@ -162,20 +164,24 @@ catch {
     Write-Host "    Details: $_"
 }
 
-# Test 6a: Bank accounts page renders
-Write-Host "Testing [GET] /bank-accounts ... " -NoNewline
+# Test 6a: Data freshness date (null when no transactions have been imported)
+Write-Host "Testing [GET] /accounts/bank/data-as-at ... " -NoNewline
 try {
-    $response = Invoke-WebRequest -Method Get -Uri "$BaseUrl/bank-accounts" -WebSession $Session -UseBasicParsing -ErrorAction Stop
-    if ($response.Content -match "Bank Accounts") {
-        Write-Host "PASS" -ForegroundColor Green
+    $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/data-as-at" -WebSession $Session -ErrorAction Stop
+    $latest = $response.latest_transaction_date
+    if ($response.PSObject.Properties.Name -contains "latest_transaction_date" -and
+        ($null -eq $latest -or $latest -match '^\d{4}-\d{2}-\d{2}$')) {
+        Write-Host "PASS (Latest transaction date: $latest)" -ForegroundColor Green
     } else {
         Write-Host "FAIL" -ForegroundColor Red
-        Write-Host "    Page did not contain expected heading 'Bank Accounts'"
+        Write-Host "    Expected latest_transaction_date as YYYY-MM-DD or null, got: '$latest'"
+        $script:Failures++
     }
 }
 catch {
     Write-Host "ERROR" -ForegroundColor Red
     Write-Host "    Details: $_"
+    $script:Failures++
 }
 
 # Test 6b: Bank account balances (with and without closed accounts)

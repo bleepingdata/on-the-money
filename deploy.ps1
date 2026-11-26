@@ -161,6 +161,17 @@ function Deploy-Python {
         Write-Step "otm-api/templates/$($file.Name)"
     }
 
+    # Copy static assets (CSS and JavaScript), preserving the folder structure
+    $staticSource = Join-Path $apiSource 'static'
+    $staticTarget = Join-Path $AppPath 'static'
+    foreach ($file in Get-ChildItem -Path $staticSource -Recurse -File) {
+        $relativePath = $file.FullName.Substring($staticSource.Length).TrimStart('\', '/')
+        $destination = Join-Path $staticTarget $relativePath
+        New-Item -Path (Split-Path $destination -Parent) -ItemType Directory -Force | Out-Null
+        Copy-Item -Path $file.FullName -Destination $destination -Force
+        Write-Step "otm-api/static/$relativePath"
+    }
+
     # Copy standalone Python scripts
     $pythonSource = Join-Path $RepoRoot 'python'
     $pythonFiles = Get-ChildItem -Path $pythonSource -Filter '*.py'

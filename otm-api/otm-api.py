@@ -59,11 +59,11 @@ def require_login() -> Optional[Response]:
     Example:
         >>> # Unauthenticated GET /accounts/bank returns 401.
     """
-    if request.endpoint == 'login':
+    if request.endpoint in ('login', 'static'):
         return None
     if not session.get('authenticated'):
         logger.warning("Unauthenticated request to %s", request.path)
-        if request.endpoint in ('index', 'rules_page', 'bank_accounts_page'):
+        if request.endpoint in ('index', 'rules_page', 'new_rule_page'):
             return redirect(url_for('login'))
         return make_response(jsonify({'error': 'Authentication required'}), 401)
     if request.method not in ('GET', 'HEAD', 'OPTIONS'):
@@ -139,13 +139,13 @@ def index() -> Response:
     """
     GET /
 
-    Renders the main application index page.
+    Renders the summary page: bank account balances and data freshness date.
 
     Args:
         None
 
     Returns:
-        200: HTML index page.
+        200: HTML summary page.
 
     Raises:
         None
@@ -333,6 +333,27 @@ def rules_page() -> Response:
     """
     return render_template('rules.html')
 
+@app.route('/rules/new', methods=['GET'])
+def new_rule_page() -> Response:
+    """
+    GET /rules/new
+
+    Renders the page for adding an expense import rule.
+
+    Args:
+        None
+
+    Returns:
+        200: HTML add-rule page.
+
+    Raises:
+        None
+
+    Example:
+        >>> # Browser navigation to http://localhost:5000/rules/new
+    """
+    return render_template('new_rule.html')
+
 @app.route('/rules/list', methods=['GET'])
 def list_rules() -> Response:
     """
@@ -480,26 +501,43 @@ def get_books_accounts() -> Response:
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/bank-accounts', methods=['GET'])
-def bank_accounts_page() -> Response:
+@app.route('/accounts/bank/data-as-at', methods=['GET'])
+def get_bank_data_as_at() -> Response:
     """
-    GET /bank-accounts
+    GET /accounts/bank/data-as-at
 
-    Renders the bank accounts page showing current balances and a summary by account type.
+    Returns the most recent bank transaction date, showing how up to date the
+    imported data is, from bank.get_latest_transaction_date.
 
     Args:
         None
 
     Returns:
-        200: HTML bank accounts page.
+        200: { "latest_transaction_date": "YYYY-MM-DD" or null when no transactions exist }
+        500: { "error": str } — database or server error.
 
     Raises:
         None
 
     Example:
-        >>> # Browser navigation to http://localhost:5000/bank-accounts
+        >>> # GET http://localhost:5000/accounts/bank/data-as-at
     """
-    return render_template('bank_accounts.html')
+    cur = None
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT bank.get_latest_transaction_date()")
+        latest = cur.fetchone()[0]
+        return jsonify({'latest_transaction_date': latest.isoformat() if latest else None})
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        logger.error("Database error in get_bank_data_as_at: %s", e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        logger.error("Unexpected error in get_bank_data_as_at: %s", e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
 
 @app.route('/accounts/bank/balances', methods=['GET'])
 def get_bank_account_balances() -> Response:

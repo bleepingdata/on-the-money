@@ -7,7 +7,8 @@
 | Path | Purpose |
 |------|---------|
 | `otm-api/otm-api.py` | Flask API (all routes live here) |
-| `otm-api/templates/` | Jinja2 HTML templates |
+| `otm-api/templates/` | Jinja2 HTML templates (all extend `base.html`, which holds the nav menu) |
+| `otm-api/static/` | `css/theme.css` (design tokens — the only place for raw colours/fonts/spacing), `css/app.css` (components built from tokens), `js/app.js` (shared helpers). No inline styles or hard-coded colours in templates |
 | `python/` | Standalone import scripts |
 | `sql/` | All CREATE scripts (functions, tables, views, sequences, schema) |
 | `drop-scripts/database/` | DROP scripts, executed in dependency order |

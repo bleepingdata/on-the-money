@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ session.get('csrf_token', '') }}">
+    <title>On The Money - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+    {% block nav %}
+    <nav class="navbar" aria-label="Main">
+        <a class="navbar__brand" href="{{ url_for('index') }}">On The Money</a>
+        <a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Summary</a>
+        <details class="nav-menu">
+            <summary>Rules</summary>
+            <div class="nav-menu__items">
+                <a href="{{ url_for('rules_page') }}" {% if request.endpoint == 'rules_page' %}aria-current="page"{% endif %}>View rules</a>
+                <a href="{{ url_for('new_rule_page') }}" {% if request.endpoint == 'new_rule_page' %}aria-current="page"{% endif %}>Add expense rule</a>
+            </div>
+        </details>
+        <details class="nav-menu">
+            <summary>Tools</summary>
+            <div class="nav-menu__items">
+                <button id="btnPopulate" class="navbar__button" type="button">Run monthly population</button>
+            </div>
+        </details>
+        <span class="navbar__spacer"></span>
+        <button id="btnLogout" class="navbar__button" type="button">Sign out</button>
+    </nav>
+    {% endblock %}
+
+    <main class="container {% block container_class %}{% endblock %}">
+        <div id="globalStatus" class="status" role="status"></div>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

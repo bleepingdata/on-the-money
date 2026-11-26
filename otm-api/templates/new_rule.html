@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Add Expense Rule{% endblock %}
+{% block content %}
+<h1>Add Expense Rule</h1>
+<div class="card">
+    <div class="form-grid">
+        <label>Expense Account (Req)
+            <select id="s_expense_account">
+                <option value="">Loading...</option>
+            </select>
+        </label>
+        <label>Cash Account (Req)
+            <select id="s_cash_account">
+                <option value="">Loading...</option>
+            </select>
+        </label>
+
+        <label>Priority<input type="number" id="n_priority" value="0"></label>
+        <label class="form-grid__inline">Is Deposit <input type="checkbox" id="b_is_deposit"></label>
+
+        <label>Bank Account
+            <select id="s_bank_account">
+                <option value="">(Any)</option>
+            </select>
+        </label>
+        <label>Type<input type="text" id="s_type"></label>
+        <label>Other Party Acct<input type="text" id="s_other_party_bank_account_number"></label>
+        <label>Details<input type="text" id="s_details"></label>
+        <label>Particulars<input type="text" id="s_particulars"></label>
+        <label>Code<input type="text" id="s_code"></label>
+        <label>Reference<input type="text" id="s_reference"></label>
+        <label>OFX Name<input type="text" id="s_ofx_name"></label>
+        <label>OFX Memo<input type="text" id="s_ofx_memo"></label>
+        <label>Wildcard Field<input type="text" id="s_wildcard_field"></label>
+
+        <div class="form-grid__full">
+            <button id="btnSaveRule" class="btn" type="button">Save Rule</button>
+            <div id="ruleStatus" class="status" role="status"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    async function loadBooksDropdown(elementId, type) {
+        const el = document.getElementById(elementId);
+        try {
+            const accounts = await otm.fetchJson(`/accounts/books?account_type=${type}`);
+            el.innerHTML = '<option value="">-- Select Account --</option>';
+            accounts.forEach(acc => {
+                const option = document.createElement('option');
+                // The stored procedure currently expects the description name string
+                option.value = acc.description;
+                option.textContent = acc.description;
+                el.appendChild(option);
+            });
+        } catch (err) {
+            el.innerHTML = '<option value="">Error</option>';
+        }
+    }
+
+    async function loadBankDropdown() {
+        const el = document.getElementById('s_bank_account');
+        try {
+            const accounts = await otm.fetchJson('/accounts/bank');
+            accounts.forEach(acc => {
+                const option = document.createElement('option');
+                option.value = acc;
+                option.textContent = acc;
+                el.appendChild(option);
+            });
+        } catch (err) { console.error('Error loading bank accounts', err); }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadBooksDropdown('s_expense_account', 'expense');
+        loadBooksDropdown('s_cash_account', 'asset');
+        loadBankDropdown();
+    });
+
+    document.getElementById('btnSaveRule').addEventListener('click', async function () {
+        const btn = this;
+        const statusDiv = document.getElementById('ruleStatus');
+        const value = id => document.getElementById(id).value;
+
+        const payload = {
+            s_expense_account: value('s_expense_account'),
+            s_cash_account: value('s_cash_account'),
+            n_priority: parseInt(value('n_priority')) || 0,
+            s_bank_account: value('s_bank_account'),
+            b_is_deposit: document.getElementById('b_is_deposit').checked,
+            s_type: value('s_type'),
+            s_other_party_bank_account_number: value('s_other_party_bank_account_number'),
+            s_details: value('s_details'),
+            s_particulars: value('s_particulars'),
+            s_code: value('s_code'),
+            s_reference: value('s_reference'),
+            s_ofx_name: value('s_ofx_name'),
+            s_ofx_memo: value('s_ofx_memo'),
+            s_wildcard_field: value('s_wildcard_field')
+        };
+
+        if (!payload.s_expense_account || !payload.s_cash_account) {
+            otm.setStatus(statusDiv, 'Please select both an expense account and a cash account.', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        otm.setStatus(statusDiv, 'Saving...', '');
+
+        try {
+            const response = await fetch('/rules/expense', {
+                method: 'POST',
+                headers: otm.csrfHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            otm.setStatus(statusDiv, response.ok ? data.message : 'Error: ' + data.error, response.ok ? 'success' : 'error');
+        } catch (err) {
+            otm.setStatus(statusDiv, 'Network Error: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}
