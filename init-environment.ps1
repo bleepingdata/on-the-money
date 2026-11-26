@@ -61,8 +61,15 @@ if (($envPath.TrimEnd('\') + '\').StartsWith($repoFull, [System.StringComparison
     throw "Private path '$envPath' is inside the repository. Change privatePath in '$($envConfig.ConfigPath)'."
 }
 
-foreach ($folder in 'init', 'bank-exports\ofx', 'bank-exports\excel', 'notes') {
+foreach ($folder in 'init', 'bank-exports', 'notes') {
     New-Item -ItemType Directory -Path (Join-Path $envPath $folder) -Force | Out-Null
+}
+
+# Incoming folder for each bank account mapped in the environment file
+foreach ($account in $envConfig.BankAccounts) {
+    if ($account.incomingFolder) {
+        New-Item -ItemType Directory -Path (Join-Path $envPath $account.incomingFolder) -Force | Out-Null
+    }
 }
 
 function Set-FileIfMissing {
@@ -97,8 +104,7 @@ Lives outside the git repository on purpose.
 |--------|----------|
 | ``connection_strings.py`` | Database credentials for the Flask API; copied to the app folder by ``deploy.ps1`` |
 | ``init\`` | psql scripts run in file-name order by ``deploy.ps1 -Environment $Environment`` |
-| ``bank-exports\ofx`` | OFX bank files for ``python/ImportOFXFile.py`` |
-| ``bank-exports\excel`` | Excel bank files for ``python/ImportBankFileANZ*.py`` |
+| ``bank-exports\<account folders>`` | Incoming folders from the ``bankAccounts`` mapping; drop OFX/Excel files here and run ``python/ImportBankFiles.py -e $Environment`` |
 | ``notes\`` | Personal markdown notes |
 "@
 

@@ -181,7 +181,18 @@ function Deploy-Python {
         Write-Warning "No connection_strings.py in $PrivateEnvPath - run .\init-environment.ps1 -Environment $Environment and set the password. The API will not start without it."
     }
 
-    $totalFiles = $apiFiles.Count + $templateFiles.Count + $pythonFiles.Count + $connCount
+    # Environment pointers let the deployed import scripts resolve -e <environment>
+    $envSource = Join-Path $RepoRoot 'environments'
+    $envFiles = @(Get-ChildItem -Path $envSource -Filter '*.json' -Recurse -File)
+    foreach ($file in $envFiles) {
+        $relative = $file.FullName.Substring($envSource.Length).TrimStart('\')
+        $envTarget = Join-Path (Join-Path $AppPath 'environments') $relative
+        New-Item -Path (Split-Path $envTarget) -ItemType Directory -Force | Out-Null
+        Copy-Item -Path $file.FullName -Destination $envTarget -Force
+        Write-Step "environments/$relative"
+    }
+
+    $totalFiles = $apiFiles.Count + $templateFiles.Count + $pythonFiles.Count + $connCount + $envFiles.Count
     Write-Success "Deployed $totalFiles files to $AppPath"
 }
 

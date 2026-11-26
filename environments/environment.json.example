@@ -1,4 +1,8 @@
 {
   "name": "my_env",
-  "privatePath": "~\\otm-private\\my_env"
+  "privatePath": "~\\otm-private\\my_env",
+  "bankAccounts": [
+    { "description": "My Current Account", "incomingFolder": "bank-exports\\current" },
+    { "description": "My Mortgage", "incomingFolder": "bank-exports\\mortgage", "format": "anz_mortgage_excel" }
+  ]
 }

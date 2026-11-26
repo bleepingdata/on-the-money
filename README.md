@@ -61,7 +61,7 @@ The password is requested once (or taken from `PGPASSWORD` if already set). Requ
 
 #### Private data (kept out of git and away from AI tools)
 
-Run `.\init-environment.ps1 -Environment sample_environment` once to create `~\otm-private\sample_environment` (outside the repo) containing `init\` (psql scripts with your bank details), `bank-exports\ofx` and `bank-exports\excel` (bank files) and `notes\` (personal markdown). Pass the import file paths to the `python/` import scripts. Never add this folder to the VS Code workspace.
+Run `.\init-environment.ps1 -Environment sample_environment` once to create `~\otm-private\sample_environment` (outside the repo) containing `init\` (psql scripts with your bank details), `bank-exports\` (an incoming folder per mapped bank account; see `bankAccounts` in [environments/README.md](environments/README.md)) and `notes\` (personal markdown). Then copy bank files into an account's incoming folder and run `python python/ImportBankFiles.py -e sample_environment`. Never add this folder to the VS Code workspace.
 
 Example:
 
@@ -111,32 +111,20 @@ If you plan to use the Flask API, `connection_strings.py` lives in the environme
 
 ### Importing data
 
-Run the Python scripts in the `python/` directory. All scripts accept database credentials and file paths as arguments.
-
-Common arguments:
-
-- `-f`, `--file`: Path to the file to import
-- `-db`: Database name
-- `-u`: Database username
-- `-p`: Database password
-- `-host`: Database host, default `localhost`
-- `-port`: Database port, default `5432`
-- `-ban`: Bank account number
-- `-bad`: Bank account description
-
-Use either `-ban` or `-bad` to identify the target bank account.
-
-Example ANZ Excel import:
+One script imports all bank files, OFX (`.ofx`, `.qfx`) and ANZ Excel (`.xls`, `.xlsx`): `python/ImportBankFiles.py`. Connection details and the account-to-folder mapping come from the environment (see [environments/README.md](environments/README.md)); you are prompted for the password if it isn't stored in `connection_strings.py`.
 
 ```bash
-python python/ImportBankFileANZ.py -f "path/to/statement.xls" -db "dbname" -u "user" -p "pass" -bad "Account Name"
+# Import every new file waiting in the incoming folders of all mapped accounts
+python python/ImportBankFiles.py -e sample_environment
+
+# Only one account (bank.account description)
+python python/ImportBankFiles.py -e sample_environment -a "Tractor Bank Current Account"
+
+# One specific file, e.g. to re-import it from the processed folder (account inferred from its folder, else add -a)
+python python/ImportBankFiles.py -e sample_environment -f statement.ofx
 ```
 
-Example OFX import:
-
-```bash
-python python/ImportOFXFile.py -f "path/to/export.ofx" -db "dbname" -u "user" -p "pass" -bad "Account Name"
-```
+Each imported file is moved to a `processed` sub-folder of its account's incoming folder. A file named with `-f` is only moved if it is waiting in an incoming folder.
 
 ### API
 

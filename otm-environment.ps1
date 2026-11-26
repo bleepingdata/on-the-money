@@ -121,6 +121,7 @@ function Get-OtmEnvironment {
         ConfigPath     = $configPath
         PrivatePath    = $privatePath
         ConnectionPath = $connectionPath
+        BankAccounts   = @($found[0].Json.bankAccounts)
     }
 
     if (-not $SkipConnection) {

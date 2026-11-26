@@ -15,6 +15,10 @@ Connection details (database, host, port, user, password) exist only in `connect
 
 - `name`: what you pass to `-Environment`. Lowercase letters, digits, underscores, starting with a letter. Optional; defaults to the file name without `.json`. Must be unique across all files.
 - `privatePath`: the private folder. `~` and `%ENV_VARS%` are expanded. Must be outside the repo.
+- `bankAccounts` (optional): maps bank accounts to incoming folders for `python/ImportBankFiles.py`. Each entry:
+  - `description`: the account's description in `bank.account`
+  - `incomingFolder`: folder (relative to `privatePath`) where new bank files are copied; `init-environment.ps1` creates it
+  - `format` (optional): `ofx`, `anz_excel` or `anz_mortgage_excel`. Default is inferred from the file extension (`.ofx`/`.qfx` is OFX, `.xls`/`.xlsx` is `anz_excel`); set `anz_mortgage_excel` for mortgage accounts
 
 ## Create a new environment
 
@@ -41,8 +45,20 @@ Connection details (database, host, port, user, password) exist only in `connect
    .\deploy.ps1 -Environment my_env
    ```
 
-   Deploy runs the SQL folders, then `init\*.sql` from the private folder, and copies `connection_strings.py` next to `otm-api.py` in `-AppPath`.
+   Deploy runs the SQL folders, then `init\*.sql` from the private folder, copies `connection_strings.py` next to `otm-api.py` in `-AppPath`, and copies the `environments\*.json` pointers to `<AppPath>\environments` so the import scripts can resolve `-e`.
+
+## Importing bank files
+
+Copy files into an account's incoming folder, then run:
+
+```powershell
+python python/ImportBankFiles.py -e my_env                          # all accounts
+python python/ImportBankFiles.py -e my_env -a "My Current Account"  # one account
+python python/ImportBankFiles.py -e my_env -f statement.ofx         # one specific file (re-import)
+```
+
+Each imported file is moved to a `processed` sub-folder of its incoming folder. Connection details come only from the environment; there are no `-db`/`-u`/`-p` flags.
 
 ## Keeping this up to date
 
-Any change to the environment file fields, `otm-environment.ps1`, `init-environment.ps1`, or the `deploy.ps1` parameters/private-data steps must update this file, `environment.json.example`, and the Setup section of the root README.
+Any change to the environment file fields, `otm-environment.ps1`, `python/otm_environment.py`, `python/otm_incoming.py`, `python/ImportBankFiles.py`, `init-environment.ps1`, or the `deploy.ps1` parameters/private-data steps must update this file, `environment.json.example`, and the Setup section of the root README.
