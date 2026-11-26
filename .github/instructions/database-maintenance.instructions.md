@@ -1,20 +1,20 @@
 ---
-description: Rules for keeping the database init script and drop scripts in sync whenever database objects are created, renamed, or deleted. Apply when creating, editing, or reviewing any file under sql/, drop-scripts/, or initialisation/.
-applyTo: "sql/**,drop-scripts/**,initialisation/**"
+description: Rules for keeping deploy.ps1 and drop scripts in sync whenever database objects are created, renamed, or deleted. Apply when creating, editing, or reviewing any file under sql/, drop-scripts/, or deploy.ps1.
+applyTo: "sql/**,drop-scripts/**,deploy.ps1"
 ---
 
 # On The Money — Database Maintenance Rules
 
-Any change that creates, renames, or deletes a database object under `sql/` is **incomplete** unless the two downstream files below are also updated in the same change.
+Any change that creates, renames, or deletes a database object under `sql/` is **incomplete** unless the drop scripts below are also updated in the same change.
 
-## 1 — Keep `initialisation/database-init.ps1` in Sync
+## 1 — Deployment Discovery
 
-`initialisation/database-init.ps1` runs all CREATE scripts at setup time. It must:
+`deploy.ps1` runs the CREATE scripts in each `sql/` folder in file-name order, so no registration is needed in the script. When adding or renaming files:
 
-- **Include** any newly created object's script.
-- **Remove** any reference to a deleted or renamed object.
+- Use numeric prefixes (`01_`, `02_`, …) wherever creation order matters within a folder (for example, tables that reference other tables, or views that depend on other views).
+- Keep the prefix in step with the file's position in the dependency chain.
 
-A change is incomplete if the init script still references deleted objects or does not include newly required ones.
+Do not add object lists to `deploy.ps1`; it must stay folder-driven.
 
 ## 2 — Keep Drop Scripts in Sync
 

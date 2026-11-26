@@ -31,30 +31,34 @@ A home accounting database for personal banking analysis. Designed for use with 
 
 ### Preferred database bootstrap
 
-Use [initialisation/database-init.ps1](initialisation/database-init.ps1) as the primary setup entry point. It applies the repository SQL in the expected order:
+Use [deploy.ps1](deploy.ps1) as the single setup entry point. It applies the repository SQL in this order:
 
-1. Database creation
+1. Database creation (if the database does not exist)
 2. Schema creation
 3. Table creation
 4. Sequence creation
 5. View creation
 6. Function creation
-7. Default account data
-8. Default import rules
+7. Default data (accounts, account types, import rules)
 
-The script accepts these optional parameters:
+Each SQL folder is run in file-name order, so numeric prefixes control ordering.
 
-- `-hostname` default `localhost`
-- `-port` default `5432`
-- `-username` default `postgres`
-- `-dbname` default `onthemoney`
+Parameters (all optional):
 
-The script expects PostgreSQL credentials to be available via `pgpass.conf`, as noted in [initialisation/database-init.ps1](initialisation/database-init.ps1).
+- `-Target` `All` (default), `Python` or `Database`
+- `-DbHost` default `localhost`
+- `-DbPort` default `5432`
+- `-DbUser` default `postgres`
+- `-DbName` default `onthemoney`
+- `-AppPath` default `C:\otm\src` (Python files only)
+- `-SkipDefaultData` skips step 7
+
+The script expects PostgreSQL credentials to be available via `pgpass.conf`, and requires `psql` and PowerShell 7 on the PATH.
 
 Example:
 
 ```powershell
-./initialisation/database-init.ps1 -hostname localhost -port 5432 -username postgres -dbname onthemoney
+./deploy.ps1 -Target Database -DbHost localhost -DbPort 5432 -DbUser postgres -DbName onthemoney
 ```
 
 ### Manual setup scope

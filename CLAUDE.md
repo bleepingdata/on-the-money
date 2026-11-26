@@ -11,7 +11,7 @@
 | `python/` | Standalone import scripts |
 | `sql/` | All CREATE scripts (functions, tables, views, sequences, schema) |
 | `drop-scripts/database/` | DROP scripts, executed in dependency order |
-| `initialisation/database-init.ps1` | Runs all CREATE scripts in order at setup time |
+| `deploy.ps1` | Deploys Python files and runs all CREATE scripts in order (database, schema, tables, sequences, views, functions, default data) |
 | `test/test-api.ps1` | API integration tests (PowerShell + `Invoke-RestMethod`) |
 
 ## Critical Rules
@@ -28,7 +28,7 @@ Test-Endpoint -Method "POST" -Path "/your/new/endpoint" -Body $Payload -Expected
 When calling stored procedures via `psycopg2`, always use explicit type casts in the SQL string (e.g. `::varchar`, `::int`) to prevent parameters being passed as `unknown`.
 
 ### 3 — Database Init Sync
-Any time a database object is created, renamed, or deleted under `sql/`, review and update `initialisation/database-init.ps1` in the same change. A change is incomplete if the init script references deleted objects or omits newly required ones.
+Any time a database object is created, renamed, or deleted under `sql/`, use numeric prefixes where creation order matters. `deploy.ps1` discovers files by folder, so no script list needs updating.
 
 ### 4 — Drop Script Sync
 Any time a database object is created, renamed, or deleted under `sql/`, update the appropriate file in `drop-scripts/database/`:

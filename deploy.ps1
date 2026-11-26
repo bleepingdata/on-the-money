@@ -5,7 +5,9 @@
 
 .DESCRIPTION
     Copies Python source files to the application folder and deploys database
-    objects (schema, tables, sequences, views, functions) to PostgreSQL.
+    objects (database, schema, tables, sequences, views, functions, default data)
+    to PostgreSQL. The database is created if it does not already exist.
+    The PostgreSQL password is requested once and reused for all connections.
 
 .PARAMETER Target
     What to deploy: 'All', 'Python', or 'Database'. Default is 'All'.
@@ -17,24 +19,24 @@
     PostgreSQL host. Default: localhost
 
 .PARAMETER DbPort
-    PostgreSQL port. Default: 6432
+    PostgreSQL port. Default: 5432
 
 .PARAMETER DbName
-    PostgreSQL database name. Default: otm
+    PostgreSQL database name. Default: onthemoney
 
 .PARAMETER DbUser
     PostgreSQL username. Default: postgres
 
-.PARAMETER IncludeDefaultData
-    If specified, also deploys default accounts and rules data.
+.PARAMETER SkipDefaultData
+    If specified, skips loading default accounts and rules data.
 
 .EXAMPLE
     .\deploy.ps1
     # Deploys everything with default settings
 
 .EXAMPLE
-    .\deploy.ps1 -Target Database -DbPort 5432
-    # Only deploys database objects to port 5432
+    .\deploy.ps1 -Target Database -DbPort 5432 -SkipDefaultData
+    # Deploys database objects to port 5432 without default data
 
 .EXAMPLE
     .\deploy.ps1 -Target Python -AppPath "D:\apps\otm"
@@ -48,11 +50,11 @@ Param(
     [string]$AppPath = 'C:\otm\src',
 
     [string]$DbHost = 'localhost',
-    [string]$DbPort = '6432',
-    [string]$DbName = 'otm',
+    [string]$DbPort = '5432',
+    [string]$DbName = 'onthemoney',
     [string]$DbUser = 'postgres',
 
-    [switch]$IncludeDefaultData
+    [switch]$SkipDefaultData
 )
 
 $ErrorActionPreference = 'Stop'
@@ -107,7 +109,7 @@ function Invoke-SqlFolder {
 
     $files = Get-ChildItem -Path $FolderPath -Filter '*.sql' | Sort-Object Name
     if ($files.Count -eq 0) {
-        Write-Step "$Label: no files to deploy"
+        Write-Step "${Label}: no files to deploy"
         return
     }
 
@@ -172,44 +174,77 @@ function Deploy-Database {
         throw "psql not found on PATH. Install PostgreSQL client tools and ensure psql is in your PATH."
     }
 
-    # Test connectivity
-    Write-Step "Testing connection to ${DbHost}:${DbPort}/${DbName}..."
-    $testResult = & psql --host=$DbHost --port=$DbPort --username=$DbUser --dbname=$DbName -c "SELECT 1;" 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        throw "Cannot connect to PostgreSQL at ${DbHost}:${DbPort}/${DbName}. Ensure the database exists and credentials are correct."
+    $setPgPassword = [string]::IsNullOrEmpty($env:PGPASSWORD)
+    try {
+        if ($setPgPassword) {
+            $securePassword = Read-Host "Password for user $DbUser" -AsSecureString
+            try {
+                $env:PGPASSWORD = [System.Net.NetworkCredential]::new('', $securePassword).Password
+            }
+            finally {
+                $securePassword.Dispose()
+            }
+        }
+
+        $sqlRoot = Join-Path $RepoRoot 'sql'
+
+        # 0. Database (created via the maintenance 'postgres' database if missing)
+        Write-Step "Checking database '$DbName'..."
+        $dbExists = & psql --host=$DbHost --port=$DbPort --username=$DbUser --dbname=postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DbName';" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "Cannot connect to PostgreSQL at ${DbHost}:${DbPort}. Check host, port and credentials."
+        }
+        if ($dbExists -ne '1') {
+            Write-Step "Creating database '$DbName'"
+            $createFile = Join-Path $sqlRoot 'database\create-database.sql'
+            $result = & psql --host=$DbHost --port=$DbPort --username=$DbUser --dbname=postgres -v "dbname=$DbName" -f $createFile 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to create database '$DbName': $($result | Out-String)"
+            }
+        }
+
+        # Test connectivity to the target database
+        Write-Step "Testing connection to ${DbHost}:${DbPort}/${DbName}..."
+        $testResult = & psql --host=$DbHost --port=$DbPort --username=$DbUser --dbname=$DbName -c "SELECT 1;" 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "Cannot connect to PostgreSQL at ${DbHost}:${DbPort}/${DbName}. Check credentials."
+        }
+        Write-Success "Connected successfully"
+
+        # 1. Schema
+        Write-Step "Schema"
+        $schemaFile = Join-Path $sqlRoot 'schema\create-schema.sql'
+        if (Test-Path $schemaFile) { Invoke-Psql -SqlFile $schemaFile }
+
+        # 2. Tables
+        Write-Step "Tables"
+        Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'tables') -Label 'Tables'
+
+        # 3. Sequences
+        Write-Step "Sequences"
+        Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'sequence') -Label 'Sequences'
+
+        # 4. Views (order can matter for dependent views)
+        Write-Step "Views"
+        Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'views') -Label 'Views'
+
+        # 5. Functions
+        Write-Step "Functions"
+        Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'functions') -Label 'Functions'
+
+        # 6. Default data (on unless -SkipDefaultData)
+        if (-not $SkipDefaultData) {
+            Write-Step "Default Data"
+            Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'default-data') -Label 'Default Data'
+        }
+
+        Write-Success "Database deployment complete"
     }
-    Write-Success "Connected successfully"
-
-    $sqlRoot = Join-Path $RepoRoot 'sql'
-
-    # 1. Schema
-    Write-Step "Schema"
-    $schemaFile = Join-Path $sqlRoot 'schema\create-schema.sql'
-    if (Test-Path $schemaFile) { Invoke-Psql -SqlFile $schemaFile }
-
-    # 2. Tables
-    Write-Step "Tables"
-    Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'tables') -Label 'Tables'
-
-    # 3. Sequences
-    Write-Step "Sequences"
-    Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'sequence') -Label 'Sequences'
-
-    # 4. Views (order can matter for dependent views)
-    Write-Step "Views"
-    Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'views') -Label 'Views'
-
-    # 5. Functions
-    Write-Step "Functions"
-    Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'functions') -Label 'Functions'
-
-    # 6. Default data (optional)
-    if ($IncludeDefaultData) {
-        Write-Step "Default Data"
-        Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'default-data') -Label 'Default Data'
+    finally {
+        if ($setPgPassword) {
+            Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
+        }
     }
-
-    Write-Success "Database deployment complete"
 }
 
 # ─── Main ───────────────────────────────────────────────────────────────────────

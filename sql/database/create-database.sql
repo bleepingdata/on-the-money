@@ -1,2 +1,2 @@
 
-create database onthemoney;
+create database :"dbname";

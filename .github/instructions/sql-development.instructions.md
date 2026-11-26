@@ -158,5 +158,5 @@ Before committing any SQL file:
 - [ ] Error messages include the problematic value and a `HINT` where appropriate
 - [ ] SQL keywords uppercase; all identifiers lowercase `snake_case`
 - [ ] Inline comments explain non-obvious blocks (CTEs, window functions, priority logic)
-- [ ] `initialisation/database-init.ps1` updated (see `database-maintenance.instructions.md`)
+- [ ] Numeric prefixes checked where creation order matters (see `database-maintenance.instructions.md`)
 - [ ] `drop-scripts/database/drop-functions.sql` updated (see `database-maintenance.instructions.md`)

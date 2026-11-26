@@ -17,9 +17,9 @@ This document outlines the coding standards and expectations for AI assistants w
 - When adding Python API methods that call PostgreSQL stored procedures, ensure explicit type casting (e.g., `::varchar`, `::int`) is used in the SQL query string within Python. This prevents `psycopg2` from passing parameters as `unknown` types.
 
 ### 3. Database Initialization Sync
-- Whenever a database object is created, renamed, or deleted, `initialisation/database-init.ps1` must be reviewed and updated in the same change.
+- Whenever a database object is created, renamed, or deleted, the numeric prefixes in its `sql/` folder must be reviewed so creation order stays correct (`deploy.ps1` runs files in name order).
 - This applies to objects defined under `sql/database/`, `sql/schema/`, `sql/tables/`, `sql/sequence/`, `sql/views/`, `sql/functions/`, and `sql/default-data/` where the initializer loads them directly.
-- A change that adds or removes a database object is incomplete if `initialisation/database-init.ps1` still references deleted objects or does not include newly required objects.
+- A change that adds or removes a database object is incomplete if its drop script in `drop-scripts/database/` is not updated.
 
 ### 4. Database Drop Scripts Sync
 **Rule:** Whenever a database object (table, view, function, sequence, schema) is created, renamed, or deleted in `sql/database/`, `sql/schema/`, `sql/tables/`, `sql/sequence/`, `sql/views/`, `sql/functions/`, the corresponding drop script in `drop-scripts/database/` **must** be updated in the same change.
