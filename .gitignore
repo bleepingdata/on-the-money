@@ -26,6 +26,9 @@ connection_strings.py
 config.py
 secrets.json
 
+# Environment configs are local; see environments/README.md and the .example template
+environments/*.json
+
 # Exclude environment variables
 .env
 

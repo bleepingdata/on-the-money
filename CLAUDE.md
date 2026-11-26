@@ -11,10 +11,15 @@
 | `python/` | Standalone import scripts |
 | `sql/` | All CREATE scripts (functions, tables, views, sequences, schema) |
 | `drop-scripts/database/` | DROP scripts, executed in dependency order |
-| `deploy.ps1` | Deploys Python files and runs all CREATE scripts in order (database, schema, tables, sequences, views, functions, default data) |
+| `deploy.ps1` | Deploys Python files and runs all CREATE scripts in order (database, schema, tables, sequences, views, functions, default data, then private init scripts) |
+| `init-environment.ps1` | Scaffolds an environment's private data folder (including `connection_strings.py`), which lives OUTSIDE the repo |
+| `environments/` | Local, git-ignored `*.json` per deploy target: environment `name` + `privatePath` only (connection details live in the private folder's `connection_strings.py`); loaded by `otm-environment.ps1`. `environments/README.md` documents creating one and **must be updated whenever environment config, `init-environment.ps1` or deploy parameters change** |
 | `test/test-api.ps1` | API integration tests (PowerShell + `Invoke-RestMethod`) |
 
 ## Critical Rules
+
+### 0 — Private Data Is Off-Limits
+Sensitive data (bank details, bank files, personal notes) lives in per-environment private folders (located by `privatePath` in the environment's git-ignored `environments/*.json`), outside this repo. Every `deploy.ps1` run requires `-Environment`, which selects that JSON file; connection details and the password are in `connection_strings.py` in the private folder. AI assistants must never read, list, search, copy or run anything from the private folders, and must not echo their contents. Don't ask the user to paste their contents; point them to run `deploy.ps1` / import scripts themselves.
 
 ### 1 — API Tests Are Mandatory
 Every new or modified route in `otm-api/otm-api.py` **must** have a matching test case added or updated in `test/test-api.ps1`. Use the `Test-Endpoint` helper already defined in that file.

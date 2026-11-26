@@ -40,25 +40,33 @@ Use [deploy.ps1](deploy.ps1) as the single setup entry point. It applies the rep
 5. View creation
 6. Function creation
 7. Default data (accounts, account types, import rules)
+8. Private init scripts for the environment (bank accounts etc., kept outside the repo)
 
 Each SQL folder is run in file-name order, so numeric prefixes control ordering.
 
-Parameters (all optional):
+Every deploy names an environment: `.\deploy.ps1 -Environment sample_environment`. The name selects two things:
 
+- **Environment file** (local, git-ignored): `environments\*.json` with `name` (what you pass to `-Environment`; defaults to the file name) and `privatePath` (the private folder). Sub-folders are fine. To create one, follow [environments/README.md](environments/README.md).
+- **Private folder** (outside the repo, at `privatePath`): holds `connection_strings.py` (the only place database host/port/name/user/password live; also used by the API, copied to `-AppPath`), `init\*.sql`, bank exports and notes.
+
+Parameters:
+
+- `-Environment` **mandatory**; lowercase letters, digits and underscores (e.g. `sample_environment`)
 - `-Target` `All` (default), `Python` or `Database`
-- `-DbHost` default `localhost`
-- `-DbPort` default `5432`
-- `-DbUser` default `postgres`
-- `-DbName` default `onthemoney`
 - `-AppPath` default `C:\otm\src` (Python files only)
 - `-SkipDefaultData` skips step 7
+- `-SkipPrivateData` skips step 8 (`<privatePath>\init\*.sql`)
 
-The script expects PostgreSQL credentials to be available via `pgpass.conf`, and requires `psql` and PowerShell 7 on the PATH.
+The password is requested once (or taken from `PGPASSWORD` if already set). Requires `psql` and PowerShell 7 on the PATH.
+
+#### Private data (kept out of git and away from AI tools)
+
+Run `.\init-environment.ps1 -Environment sample_environment` once to create `~\otm-private\sample_environment` (outside the repo) containing `init\` (psql scripts with your bank details), `bank-exports\ofx` and `bank-exports\excel` (bank files) and `notes\` (personal markdown). Pass the import file paths to the `python/` import scripts. Never add this folder to the VS Code workspace.
 
 Example:
 
 ```powershell
-./deploy.ps1 -Target Database -DbHost localhost -DbPort 5432 -DbUser postgres -DbName onthemoney
+./deploy.ps1 -Environment sample_environment -Target Database
 ```
 
 ### Manual setup scope
@@ -91,7 +99,7 @@ After dropping objects, you can re-initialize the database using the setup proce
 
 ### API configuration
 
-If you plan to use the Flask API, create a local `connection_strings.py` file for [otm-api/otm-api.py](otm-api/otm-api.py). That module is expected to define:
+If you plan to use the Flask API, `connection_strings.py` lives in the environment's private folder (`privatePath` in its environments JSON) and is copied next to `otm-api.py` by `deploy.ps1`; `init-environment.ps1` creates a template. It must define:
 
 - `s_databasename`
 - `s_username`

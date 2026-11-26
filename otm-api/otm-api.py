@@ -373,4 +373,128 @@ def get_books_accounts() -> Response:
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/bank-accounts', methods=['GET'])
+def bank_accounts_page() -> Response:
+    """
+    GET /bank-accounts
+
+    Renders the bank accounts page showing current balances and a summary by account type.
+
+    Args:
+        None
+
+    Returns:
+        200: HTML bank accounts page.
+
+    Raises:
+        None
+
+    Example:
+        >>> # Browser navigation to http://localhost:5000/bank-accounts
+    """
+    return render_template('bank_accounts.html')
+
+@app.route('/accounts/bank/balances', methods=['GET'])
+def get_bank_account_balances() -> Response:
+    """
+    GET /accounts/bank/balances
+
+    Returns each bank account with its current balance from
+    bank.get_bank_accounts_with_balances. Closed accounts are excluded unless
+    the include_closed query parameter is true.
+
+    Args:
+        None (query param: include_closed (bool, optional) — defaults to false)
+
+    Returns:
+        200: JSON array of { bank_account_id, description, bank_account_type, open_date,
+             close_date, current_balance, last_transaction_date, transaction_count }.
+        500: { "error": str } — database or server error.
+
+    Raises:
+        None
+
+    Example:
+        >>> # GET http://localhost:5000/accounts/bank/balances?include_closed=true
+    """
+    cur = None
+    try:
+        is_include_closed = request.args.get('include_closed', 'false').lower() == 'true'
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT bank_account_id, description, bank_account_type, open_date, close_date, "
+            "current_balance, last_transaction_date, transaction_count "
+            "FROM bank.get_bank_accounts_with_balances(%s::boolean)",
+            (is_include_closed,)
+        )
+        rows = cur.fetchall()
+        return jsonify([{
+            'bank_account_id': row[0],
+            'description': row[1],
+            'bank_account_type': row[2],
+            'open_date': row[3].isoformat() if row[3] else None,
+            'close_date': row[4].isoformat() if row[4] else None,
+            # numeric arrives as Decimal; JSON needs a float
+            'current_balance': float(row[5]),
+            'last_transaction_date': row[6].isoformat() if row[6] else None,
+            'transaction_count': row[7]
+        } for row in rows])
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        logger.error("Database error in get_bank_account_balances: %s", e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        logger.error("Unexpected error in get_bank_account_balances: %s", e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+
+@app.route('/accounts/bank/summary', methods=['GET'])
+def get_bank_account_summary() -> Response:
+    """
+    GET /accounts/bank/summary
+
+    Returns bank account totals grouped by account type from
+    bank.get_bank_account_balance_summary.
+
+    Args:
+        None (query param: include_closed (bool, optional) — defaults to false)
+
+    Returns:
+        200: JSON array of { bank_account_type, account_count, total_balance }.
+        500: { "error": str } — database or server error.
+
+    Raises:
+        None
+
+    Example:
+        >>> # GET http://localhost:5000/accounts/bank/summary
+    """
+    cur = None
+    try:
+        is_include_closed = request.args.get('include_closed', 'false').lower() == 'true'
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT bank_account_type, account_count, total_balance "
+            "FROM bank.get_bank_account_balance_summary(%s::boolean)",
+            (is_include_closed,)
+        )
+        rows = cur.fetchall()
+        return jsonify([{
+            'bank_account_type': row[0],
+            'account_count': row[1],
+            'total_balance': float(row[2])
+        } for row in rows])
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        logger.error("Database error in get_bank_account_summary: %s", e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        logger.error("Unexpected error in get_bank_account_summary: %s", e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+
 app.run(debug=True)

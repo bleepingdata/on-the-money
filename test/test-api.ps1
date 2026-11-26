@@ -117,6 +117,60 @@ catch {
     Write-Host "    Details: $_"
 }
 
+# Test 6a: Bank accounts page renders
+Write-Host "Testing [GET] /bank-accounts ... " -NoNewline
+try {
+    $response = Invoke-WebRequest -Method Get -Uri "$BaseUrl/bank-accounts" -UseBasicParsing -ErrorAction Stop
+    if ($response.Content -match "Bank Accounts") {
+        Write-Host "PASS" -ForegroundColor Green
+    } else {
+        Write-Host "FAIL" -ForegroundColor Red
+        Write-Host "    Page did not contain expected heading 'Bank Accounts'"
+    }
+}
+catch {
+    Write-Host "ERROR" -ForegroundColor Red
+    Write-Host "    Details: $_"
+}
+
+# Test 6b: Bank account balances (with and without closed accounts)
+foreach ($Query in @("", "?include_closed=true")) {
+    Write-Host "Testing [GET] /accounts/bank/balances$Query ... " -NoNewline
+    try {
+        $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/balances$Query" -ErrorAction Stop
+        $items = @($response)
+        $hasShape = ($items.Count -eq 0) -or ($null -ne $items[0].current_balance -and $null -ne $items[0].description)
+        if ($hasShape) {
+            Write-Host "PASS (Returned $($items.Count) account(s))" -ForegroundColor Green
+        } else {
+            Write-Host "FAIL" -ForegroundColor Red
+            Write-Host "    Response missing description/current_balance fields"
+        }
+    }
+    catch {
+        Write-Host "ERROR" -ForegroundColor Red
+        Write-Host "    Details: $_"
+    }
+}
+
+# Test 6d: Bank account summary by type
+Write-Host "Testing [GET] /accounts/bank/summary ... " -NoNewline
+try {
+    $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/summary" -ErrorAction Stop
+    $items = @($response)
+    $hasShape = ($items.Count -eq 0) -or ($null -ne $items[0].bank_account_type -and $null -ne $items[0].total_balance)
+    if ($hasShape) {
+        Write-Host "PASS (Returned $($items.Count) type(s))" -ForegroundColor Green
+    } else {
+        Write-Host "FAIL" -ForegroundColor Red
+        Write-Host "    Response missing bank_account_type/total_balance fields"
+    }
+}
+catch {
+    Write-Host "ERROR" -ForegroundColor Red
+    Write-Host "    Details: $_"
+}
+
 # Test 7: List Import Rules
 $Uri = "$BaseUrl/rules/list"
 Write-Host "Testing [GET] /rules/list ... " -NoNewline

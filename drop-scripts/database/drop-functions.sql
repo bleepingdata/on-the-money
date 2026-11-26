@@ -1,6 +1,8 @@
 ﻿DROP FUNCTION IF EXISTS bank.delete_bank_transaction_entries_for_account;
 DROP FUNCTION IF EXISTS bank.delete_import_rule;
+DROP FUNCTION IF EXISTS bank.get_bank_account_balance_summary;
 DROP FUNCTION IF EXISTS bank.get_bank_account_descriptions;
+DROP FUNCTION IF EXISTS bank.get_bank_accounts_with_balances;
 DROP FUNCTION IF EXISTS bank.get_import_rules;
 DROP FUNCTION IF EXISTS bank.insert_bank_transaction_from_anz_excel;
 DROP FUNCTION IF EXISTS bank.insert_bank_transaction_from_anz_mortgage_excel;

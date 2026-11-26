@@ -9,56 +9,65 @@
     to PostgreSQL. The database is created if it does not already exist.
     The PostgreSQL password is requested once and reused for all connections.
 
+    Every deploy targets a named environment, defined by a git-ignored JSON file under
+    environments\ (sub-folders allowed) that gives the environment name and the location of
+    its private folder. Connection details (and the password, if stored) are read from
+    connection_strings.py in that private folder.
+
+.PARAMETER Environment
+    Mandatory. Environment name, e.g. 'sample_environment'; matches "name" in an environments\*.json file.
+    Lowercase letters, digits and underscores, starting with a letter.
+
 .PARAMETER Target
     What to deploy: 'All', 'Python', or 'Database'. Default is 'All'.
 
 .PARAMETER AppPath
     Destination folder for Python application files. Default: C:\otm\src
 
-.PARAMETER DbHost
-    PostgreSQL host. Default: localhost
-
-.PARAMETER DbPort
-    PostgreSQL port. Default: 5432
-
-.PARAMETER DbName
-    PostgreSQL database name. Default: onthemoney
-
-.PARAMETER DbUser
-    PostgreSQL username. Default: postgres
-
 .PARAMETER SkipDefaultData
     If specified, skips loading default accounts and rules data.
 
-.EXAMPLE
-    .\deploy.ps1
-    # Deploys everything with default settings
+.PARAMETER SkipPrivateData
+    If specified, skips running the private init scripts.
 
 .EXAMPLE
-    .\deploy.ps1 -Target Database -DbPort 5432 -SkipDefaultData
-    # Deploys database objects to port 5432 without default data
+    .\deploy.ps1 -Environment sample_environment
+    # Deploys everything to the database named in environments\sample_environment.json
 
 .EXAMPLE
-    .\deploy.ps1 -Target Python -AppPath "D:\apps\otm"
+    .\deploy.ps1 -Environment sample_environment -Target Database -SkipDefaultData -SkipPrivateData
+    # Deploys only the database objects
+
+.EXAMPLE
+    .\deploy.ps1 -Environment sample_environment -Target Python -AppPath "D:\apps\otm"
     # Only copies Python files to a custom path
 #>
 
 Param(
+    [Parameter(Mandatory, Position = 0)]
+    [ValidatePattern('^[a-z][a-z0-9_]{0,62}$')]
+    [string]$Environment,
+
     [ValidateSet('All', 'Python', 'Database')]
     [string]$Target = 'All',
 
     [string]$AppPath = 'C:\otm\src',
 
-    [string]$DbHost = 'localhost',
-    [string]$DbPort = '5432',
-    [string]$DbName = 'onthemoney',
-    [string]$DbUser = 'postgres',
+    [switch]$SkipDefaultData,
 
-    [switch]$SkipDefaultData
+    [switch]$SkipPrivateData
 )
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = $PSScriptRoot
+
+. (Join-Path $RepoRoot 'otm-environment.ps1')
+$envConfig = Get-OtmEnvironment -Environment $Environment -RepoRoot $RepoRoot
+$DbHost = $envConfig.DbHost
+$DbPort = $envConfig.DbPort
+$DbName = $envConfig.DbName
+$DbUser = $envConfig.DbUser
+$PrivateEnvPath = $envConfig.PrivatePath
 
 # ─── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -160,7 +169,19 @@ function Deploy-Python {
         Write-Step "python/$($file.Name)"
     }
 
-    $totalFiles = $apiFiles.Count + $templateFiles.Count + $pythonFiles.Count
+    # Per-environment credentials live in the private folder, not the repo
+    $connFile = Join-Path $PrivateEnvPath 'connection_strings.py'
+    $connCount = 0
+    if (Test-Path $connFile) {
+        Copy-Item -Path $connFile -Destination $AppPath -Force
+        Write-Step "connection_strings.py (from private folder)"
+        $connCount = 1
+    }
+    else {
+        Write-Warning "No connection_strings.py in $PrivateEnvPath - run .\init-environment.ps1 -Environment $Environment and set the password. The API will not start without it."
+    }
+
+    $totalFiles = $apiFiles.Count + $templateFiles.Count + $pythonFiles.Count + $connCount
     Write-Success "Deployed $totalFiles files to $AppPath"
 }
 
@@ -176,7 +197,10 @@ function Deploy-Database {
 
     $setPgPassword = [string]::IsNullOrEmpty($env:PGPASSWORD)
     try {
-        if ($setPgPassword) {
+        if ($setPgPassword -and $envConfig.DbPassword) {
+            $env:PGPASSWORD = $envConfig.DbPassword
+        }
+        elseif ($setPgPassword) {
             $securePassword = Read-Host "Password for user $DbUser" -AsSecureString
             try {
                 $env:PGPASSWORD = [System.Net.NetworkCredential]::new('', $securePassword).Password
@@ -238,6 +262,18 @@ function Deploy-Database {
             Invoke-SqlFolder -FolderPath (Join-Path $sqlRoot 'default-data') -Label 'Default Data'
         }
 
+        # 7. Private init scripts for this environment, kept outside the repository
+        $privateInit = Join-Path $PrivateEnvPath 'init'
+        if ($SkipPrivateData) {
+            Write-Step "Private Init: skipped"
+        }
+        elseif (Test-Path $privateInit) {
+            Invoke-SqlFolder -FolderPath $privateInit -Label 'Private Init'
+        }
+        else {
+            Write-Step "Private Init: no folder for '$Environment' (run .\init-environment.ps1 -Environment $Environment)"
+        }
+
         Write-Success "Database deployment complete"
     }
     finally {
@@ -251,6 +287,7 @@ function Deploy-Database {
 
 $startTime = Get-Date
 Write-Host "`n━━━ On The Money Deploy ━━━" -ForegroundColor Yellow
+Write-Host "  Environment: $Environment"
 Write-Host "  Target:   $Target"
 Write-Host "  App Path: $AppPath"
 Write-Host "  Database: ${DbUser}@${DbHost}:${DbPort}/${DbName}"
