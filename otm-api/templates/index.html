@@ -103,7 +103,12 @@
             accountsBody.replaceChildren();
             accounts.forEach(acc => {
                 const row = document.createElement('tr');
-                addCell(row, acc.description);
+                const nameCell = document.createElement('td');
+                const link = document.createElement('a');
+                link.href = `/bank-accounts/${acc.bank_account_id}`;
+                link.textContent = acc.description;
+                nameCell.appendChild(link);
+                row.appendChild(nameCell);
                 addCell(row, acc.bank_account_type);
                 addCell(row, acc.open_date || '');
                 addCell(row, acc.close_date || '');

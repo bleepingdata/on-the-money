@@ -82,7 +82,8 @@ Test-Endpoint -Method "GET" -Path "/login" -ExpectedContent "On The Money - Sign
 # Stylesheets must load on the login page before authentication
 Test-Endpoint -Method "GET" -Path "/static/css/theme.css" -ExpectedContent "--color-primary" -ContentMatch -NoSession
 foreach ($Path in @("/rules/list", "/accounts/bank", "/accounts/books",
-                   "/accounts/bank/balances", "/accounts/bank/summary", "/accounts/bank/data-as-at")) {
+                   "/accounts/bank/balances", "/accounts/bank/summary", "/accounts/bank/data-as-at",
+                   "/accounts/bank/1/transactions")) {
     Test-Endpoint -Method "GET" -Path $Path -ExpectedStatus 401 -NoSession
 }
 Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedStatus 401 -NoSession
@@ -101,6 +102,7 @@ $CsrfToken = $LoginResult.csrf_token
 Test-Endpoint -Method "GET" -Path "/" -ExpectedContent "On The Money - Summary" -ContentMatch
 Test-Endpoint -Method "GET" -Path "/rules" -ExpectedContent "Import Rules" -ContentMatch
 Test-Endpoint -Method "GET" -Path "/rules/new" -ExpectedContent "Add Expense Rule" -ContentMatch
+Test-Endpoint -Method "GET" -Path "/bank-accounts/1" -ExpectedContent "Bank Account Transactions" -ContentMatch
 Test-Endpoint -Method "PUT" -Path "/summary/populate" -ExpectedStatus 403 -NoCsrf
 Test-Endpoint -Method "POST" -Path "/rules/expense" -ExpectedStatus 403 -NoCsrf
 Test-Endpoint -Method "DELETE" -Path "/rules/999999" -ExpectedStatus 403 -NoCsrf
@@ -203,6 +205,35 @@ foreach ($Query in @("", "?include_closed=true")) {
         Write-Host "    Details: $_"
     }
 }
+
+# Test 6c: Bank account transaction history (first account if any, paged, plus error cases)
+Write-Host "Testing [GET] /accounts/bank/{id}/transactions ... " -NoNewline
+try {
+    $accounts = @(Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/balances?include_closed=true" -WebSession $Session -ErrorAction Stop)
+    if ($accounts.Count -eq 0) {
+        Write-Host "SKIP (no bank accounts)" -ForegroundColor Yellow
+    } else {
+        $accountId = $accounts[0].bank_account_id
+        $response = Invoke-RestMethod -Method Get -Uri "$BaseUrl/accounts/bank/$accountId/transactions?limit=5" -WebSession $Session -ErrorAction Stop
+        $items = @($response)
+        $hasShape = ($items.Count -eq 0) -or ($null -ne $items[0].transaction_date -and $null -ne $items[0].amount)
+        if ($hasShape -and $items.Count -le 5) {
+            Write-Host "PASS (Returned $($items.Count) transaction(s))" -ForegroundColor Green
+        } else {
+            Write-Host "FAIL" -ForegroundColor Red
+            Write-Host "    Response missing transaction_date/amount fields or exceeded the limit"
+            $script:Failures++
+        }
+    }
+}
+catch {
+    Write-Host "ERROR" -ForegroundColor Red
+    Write-Host "    Details: $_"
+    $script:Failures++
+}
+Test-Endpoint -Method "GET" -Path "/accounts/bank/999999/transactions" -ExpectedStatus 404
+Test-Endpoint -Method "GET" -Path "/accounts/bank/1/transactions?limit=0" -ExpectedStatus 400
+Test-Endpoint -Method "GET" -Path "/accounts/bank/1/transactions?offset=abc" -ExpectedStatus 400
 
 # Test 6d: Bank account summary by type
 Write-Host "Testing [GET] /accounts/bank/summary ... " -NoNewline

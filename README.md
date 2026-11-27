@@ -157,11 +157,12 @@ For future hosting, run the app with a production WSGI server behind an authenti
 Current routes include:
 
 - `GET /login`, `POST /login`, `POST /logout`
-- Pages: `GET /` (summary: bank balances and data-as-at date), `GET /rules`, `GET /rules/new`
+- Pages: `GET /` (summary: bank balances and data-as-at date), `GET /bank-accounts/<id>` (account transaction history), `GET /rules`, `GET /rules/new`
 - `PUT /summary/populate`
 - `POST /rules/expense`
 - `GET /accounts/bank`
 - `GET /accounts/bank/data-as-at`
+- `GET /accounts/bank/<id>/transactions?limit=&offset=`
 - `GET /accounts/books`
 
 #### Look and feel

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Bank Account Transactions{% endblock %}
+{% block container_class %}container--wide{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('index') }}">&larr; Back to summary</a></p>
+<h1 id="accountTitle">Bank Account Transactions</h1>
+<p id="accountDetails" class="text-muted"></p>
+<div id="status" class="status" role="status"></div>
+
+<div class="table-wrapper">
+    <table id="transactionsTable" hidden>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Processed</th>
+                <th class="num">Amount</th>
+                <th class="num">Balance</th>
+                <th>Type</th>
+                <th>Details</th>
+                <th>Particulars</th>
+                <th>Code</th>
+                <th>Reference</th>
+                <th>Other Party Acct</th>
+                <th>OFX Name</th>
+                <th>OFX Memo</th>
+                <th>Rule ID</th>
+            </tr>
+        </thead>
+        <tbody id="transactionsBody"></tbody>
+    </table>
+</div>
+<p class="text-center"><button id="btnLoadMore" class="btn" type="button" hidden>Load more</button></p>
+{% endblock %}
+{% block scripts %}
+<script>
+    const BANK_ACCOUNT_ID = {{ bank_account_id | tojson }};
+    const PAGE_SIZE = 200;
+    let nextOffset = 0;
+
+    function addCell(row, value, className) {
+        const td = document.createElement('td');
+        td.textContent = (value === null || value === undefined) ? '' : value;
+        if (className) td.className = className;
+        row.appendChild(td);
+    }
+
+    function amountClass(value) {
+        return value < 0 ? 'num negative' : 'num';
+    }
+
+    async function loadAccountDetails() {
+        try {
+            const accounts = await otm.fetchJson('/accounts/bank/balances?include_closed=true');
+            const account = accounts.find(a => a.bank_account_id === BANK_ACCOUNT_ID);
+            if (!account) return;
+            document.getElementById('accountTitle').textContent = account.description;
+            document.getElementById('accountDetails').textContent =
+                `${account.bank_account_type} account \u00b7 current balance ${otm.money.format(account.current_balance)}`;
+        } catch (err) {
+            console.error('Error loading account details', err);
+        }
+    }
+
+    async function loadTransactions() {
+        const statusDiv = document.getElementById('status');
+        const loadMore = document.getElementById('btnLoadMore');
+        const table = document.getElementById('transactionsTable');
+        const body = document.getElementById('transactionsBody');
+        loadMore.disabled = true;
+        otm.setStatus(statusDiv, 'Loading...', '');
+
+        try {
+            const transactions = await otm.fetchJson(
+                `/accounts/bank/${BANK_ACCOUNT_ID}/transactions?limit=${PAGE_SIZE}&offset=${nextOffset}`);
+            transactions.forEach(tx => {
+                const row = document.createElement('tr');
+                addCell(row, tx.transaction_date);
+                addCell(row, tx.processed_date);
+                addCell(row, otm.money.format(tx.amount), amountClass(tx.amount));
+                addCell(row, tx.balance === null ? '' : otm.money.format(tx.balance), 'num');
+                addCell(row, tx.transaction_type);
+                addCell(row, tx.details);
+                addCell(row, tx.particulars);
+                addCell(row, tx.code);
+                addCell(row, tx.reference);
+                addCell(row, tx.other_party_bank_account_number);
+                addCell(row, tx.ofx_name);
+                addCell(row, tx.ofx_memo);
+                addCell(row, tx.matched_import_rule_id);
+                body.appendChild(row);
+            });
+            nextOffset += transactions.length;
+            table.hidden = nextOffset === 0;
+            // A full page suggests there may be more rows to fetch
+            loadMore.hidden = transactions.length < PAGE_SIZE;
+            otm.setStatus(statusDiv, nextOffset === 0 ? 'No transactions found for this account.' : '', '');
+        } catch (err) {
+            otm.setStatus(statusDiv, 'Error: ' + err.message, 'error');
+        } finally {
+            loadMore.disabled = false;
+        }
+    }
+
+    document.getElementById('btnLoadMore').addEventListener('click', loadTransactions);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAccountDetails();
+        loadTransactions();
+    });
+</script>
+{% endblock %}

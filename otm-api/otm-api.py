@@ -15,7 +15,7 @@ from typing import Optional
 
 from flask import Flask, request, jsonify, render_template, Response, redirect, session, url_for, make_response
 import psycopg2
-
+import psycopg2.errors
 # connection_strings.py is git-ignored to protect credentials; must define all five variables below
 from connection_strings import s_databasename, s_username, s_password, s_host, n_port
 import otm_summary
@@ -63,7 +63,7 @@ def require_login() -> Optional[Response]:
         return None
     if not session.get('authenticated'):
         logger.warning("Unauthenticated request to %s", request.path)
-        if request.endpoint in ('index', 'rules_page', 'new_rule_page'):
+        if request.endpoint in ('index', 'rules_page', 'new_rule_page', 'bank_account_transactions_page'):
             return redirect(url_for('login'))
         return make_response(jsonify({'error': 'Authentication required'}), 401)
     if request.method not in ('GET', 'HEAD', 'OPTIONS'):
@@ -500,6 +500,109 @@ def get_books_accounts() -> Response:
         } for row in rows])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/bank-accounts/<int:bank_account_id>', methods=['GET'])
+def bank_account_transactions_page(bank_account_id: int) -> Response:
+    """
+    GET /bank-accounts/{bank_account_id}
+
+    Renders the transaction history page for one bank account. The page loads
+    its data from /accounts/bank/{bank_account_id}/transactions.
+
+    Args:
+        bank_account_id (int): Primary key of the bank account.
+
+    Returns:
+        200: HTML transaction history page.
+
+    Raises:
+        None
+
+    Example:
+        >>> # Browser navigation to http://localhost:5000/bank-accounts/1
+    """
+    return render_template('bank_account_transactions.html', bank_account_id=bank_account_id)
+
+@app.route('/accounts/bank/<int:bank_account_id>/transactions', methods=['GET'])
+def get_bank_account_transactions(bank_account_id: int) -> Response:
+    """
+    GET /accounts/bank/{bank_account_id}/transactions
+
+    Returns the transaction history of one bank account, newest first, from
+    bank.get_bank_transactions. Results are paged with limit and offset.
+
+    Args:
+        bank_account_id (int): Primary key of the bank account.
+        None (query params: limit (int, optional) — 1 to 1000, defaults to 200;
+              offset (int, optional) — 0 or more, defaults to 0)
+
+    Returns:
+        200: JSON array of { transaction_id, transaction_date, processed_date, amount, balance,
+             bank_account_number, other_party_bank_account_number, transaction_type, details,
+             particulars, code, reference, ofx_name, ofx_memo, matched_import_rule_id }.
+        400: { "error": str } — invalid limit or offset.
+        404: { "error": str } — bank account not found.
+        500: { "error": str } — database or server error.
+
+    Raises:
+        None
+
+    Example:
+        >>> # GET http://localhost:5000/accounts/bank/1/transactions?limit=50&offset=50
+    """
+    cur = None
+    try:
+        try:
+            limit = int(request.args.get('limit', 200))
+            offset = int(request.args.get('offset', 0))
+        except ValueError:
+            logger.warning("Non-numeric limit/offset for bank account %s", bank_account_id)
+            return jsonify({'error': 'limit and offset must be integers'}), 400
+        if not 1 <= limit <= 1000 or offset < 0:
+            logger.warning("Out-of-range limit/offset (%s, %s) for bank account %s", limit, offset, bank_account_id)
+            return jsonify({'error': 'limit must be 1 to 1000 and offset must be 0 or more'}), 400
+
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT transaction_id, transaction_date, processed_date, amount, balance, "
+            "bank_account_number, other_party_bank_account_number, transaction_type, details, "
+            "particulars, code, reference, ofx_name, ofx_memo, matched_import_rule_id "
+            "FROM bank.get_bank_transactions(%s::int, %s::int, %s::int)",
+            (bank_account_id, limit, offset)
+        )
+        rows = cur.fetchall()
+        return jsonify([{
+            'transaction_id': row[0],
+            'transaction_date': row[1].isoformat(),
+            'processed_date': row[2].isoformat() if row[2] else None,
+            # numeric arrives as Decimal; JSON needs a float
+            'amount': float(row[3]),
+            'balance': float(row[4]) if row[4] is not None else None,
+            'bank_account_number': row[5],
+            'other_party_bank_account_number': row[6],
+            'transaction_type': row[7],
+            'details': row[8],
+            'particulars': row[9],
+            'code': row[10],
+            'reference': row[11],
+            'ofx_name': row[12],
+            'ofx_memo': row[13],
+            'matched_import_rule_id': row[14]
+        } for row in rows])
+    except psycopg2.errors.NoDataFound:
+        conn.rollback()
+        logger.warning("Bank account not found: %s", bank_account_id)
+        return jsonify({'error': f'Bank account {bank_account_id} not found'}), 404
+    except psycopg2.DatabaseError as e:
+        conn.rollback()
+        logger.error("Database error in get_bank_account_transactions (bank_account_id=%s): %s", bank_account_id, e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        logger.error("Unexpected error in get_bank_account_transactions (bank_account_id=%s): %s", bank_account_id, e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
 
 @app.route('/accounts/bank/data-as-at', methods=['GET'])
 def get_bank_data_as_at() -> Response:
